@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KTO Resells — Premium Sneakers. Verified. Ready to Ship.</title>
+<meta name="description" content="KTO Resells sells clean, authentic sneakers at fair prices. Every pair verified and ready to ship." />
+
+<style>
+/* ============================================================
+   KTO RESELLS — single-file store mockup
+   Palette: near-black / white / warm gray + one accent
+   Edit the CSS variables below to retune the whole site.
+   ============================================================ */
+:root{
+  --ink:#0e0e10;          /* primary text / buttons */
+  --ink-soft:#5b5b62;     /* secondary text */
+  --line:#e9e9ec;         /* hairline borders */
+  --bg:#ffffff;           /* page background */
+  --bg-alt:#f6f6f4;       /* sections / cards */
+  --accent:#2f4cff;       /* small accent — links, badge dot */
+  --radius:10px;
+  --maxw:1180px;
+  --shadow:0 1px 2px rgba(16,16,18,.05), 0 12px 30px rgba(16,16,18,.06);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji",sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+/* ---------- Announcement bar ---------- */
+.announce{background:var(--ink);color:#fff;font-size:12.5px;letter-spacing:.04em;text-align:center;padding:9px 16px}
+.announce span{opacity:.85}
+
+/* ---------- Header / Nav ---------- */
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+.brand{font-weight:800;font-size:19px;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
+.nav-links{display:flex;gap:30px;list-style:none}
+.nav-links a{font-size:14.5px;color:var(--ink-soft);font-weight:500;transition:color .15s}
+.nav-links a:hover{color:var(--ink)}
+.nav-right{display:flex;align-items:center;gap:18px}
+.bag{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;border:1px solid var(--line);padding:8px 14px;border-radius:999px;transition:border-color .15s,transform .15s}
+.bag:hover{border-color:var(--ink);transform:translateY(-1px)}
+.bag svg{width:17px;height:17px}
+.bag .count{background:var(--ink);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+.menu-btn{display:none;background:none;border:none;cursor:pointer;padding:6px}
+.menu-btn span{display:block;width:22px;height:2px;background:var(--ink);margin:4px 0;transition:.2s}
+
+/* mobile nav drawer */
+.mobile-nav{display:none;border-bottom:1px solid var(--line);background:#fff}
+.mobile-nav a{display:block;padding:15px 24px;font-size:16px;border-top:1px solid var(--line);color:var(--ink)}
+.mobile-nav.open{display:block}
+
+/* ---------- Hero ---------- */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center;padding:72px 0 80px}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:22px}
+.hero-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.hero h1{font-size:clamp(34px,4.6vw,56px);line-height:1.02;font-weight:800;letter-spacing:-.03em}
+.hero p{color:var(--ink-soft);font-size:17px;max-width:440px;margin:22px 0 34px}
+.hero-cta{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:15px;padding:14px 26px;border-radius:999px;cursor:pointer;border:1px solid transparent;transition:transform .15s,background .15s,border-color .15s}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);background:#26262b}
+.btn-ghost{border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--ink)}
+.hero-meta{display:flex;gap:30px;margin-top:40px}
+.hero-meta div{font-size:13px;color:var(--ink-soft)}
+.hero-meta strong{display:block;font-size:22px;color:var(--ink);font-weight:800;letter-spacing:-.02em}
+.hero-img{position:relative;border-radius:16px;overflow:hidden;background:var(--bg-alt);aspect-ratio:1/1}
+.hero-img img{width:100%;height:100%;object-fit:cover}
+.hero-tag{position:absolute;left:18px;bottom:18px;background:rgba(255,255,255,.94);backdrop-filter:blur(4px);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow)}
+.hero-tag small{display:block;font-size:11px;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase}
+.hero-tag b{font-size:14.5px}
+
+/* ---------- Section heading ---------- */
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:30px;gap:20px}
+.sec-head h2{font-size:clamp(24px,3vw,32px);font-weight:800;letter-spacing:-.02em}
+.sec-head p{color:var(--ink-soft);font-size:14.5px;margin-top:6px}
+.sec-head a{font-size:14px;font-weight:600;color:var(--ink);border-bottom:1.5px solid var(--ink);padding-bottom:2px;white-space:nowrap}
+section{padding:64px 0}
+
+/* ---------- Product grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s,border-color .2s}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#dcdce0}
+.card-img{position:relative;aspect-ratio:1/1;background:var(--bg-alt);overflow:hidden}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+.card:hover .card-img img{transform:scale(1.04)}
+.badge{position:absolute;top:12px;left:12px;background:#fff;font-size:11px;font-weight:700;letter-spacing:.03em;padding:5px 10px;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.badge.verified{display:flex;align-items:center;gap:6px}
+.badge.verified::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.card-body{padding:16px 16px 18px;display:flex;flex-direction:column;flex:1}
+.card-brand{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.card-name{font-size:15.5px;font-weight:700;margin:5px 0 12px;letter-spacing:-.01em}
+.card-specs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.chip{font-size:12px;color:var(--ink-soft);background:var(--bg-alt);border:1px solid var(--line);padding:4px 9px;border-radius:6px}
+.card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.price{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.price small{font-size:12px;font-weight:500;color:var(--ink-soft)}
+.view{font-size:13px;font-weight:600;border:1px solid var(--line);padding:9px 14px;border-radius:8px;transition:background .15s,color .15s,border-color .15s;white-space:nowrap;cursor:pointer}
+.buy-btn{background:var(--ink);color:#fff;border-color:var(--ink)}
+.buy-btn:hover{background:#26262b}
+.sold-btn{color:var(--ink-soft);background:var(--bg-alt);cursor:not-allowed}
+.card.is-sold .card-img img{opacity:.55;filter:grayscale(.3)}
+.badge.sold-badge{background:var(--ink);color:#fff}
+.checkout-note{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);margin-top:18px}
+.checkout-note svg{width:15px;height:15px;flex:none}
+
+/* ---------- Trust ---------- */
+.trust{background:var(--bg-alt);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.trust-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px 26px}
+.trust-card .ic{width:42px;height:42px;border-radius:10px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.trust-card .ic svg{width:21px;height:21px}
+.trust-card h3{font-size:16.5px;font-weight:700;margin-bottom:7px}
+.trust-card p{font-size:14px;color:var(--ink-soft)}
+
+/* ---------- About ---------- */
+.about{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.about-img{border-radius:16px;overflow:hidden;aspect-ratio:4/3;background:var(--bg-alt)}
+.about-img img{width:100%;height:100%;object-fit:cover}
+.about h2{font-size:clamp(24px,3vw,34px);font-weight:800;letter-spacing:-.02em;margin-bottom:18px}
+.about p{color:var(--ink-soft);font-size:16px;margin-bottom:16px}
+.about .sig{font-weight:700;color:var(--ink);margin-top:24px}
+.about .sig span{display:block;font-weight:500;color:var(--ink-soft);font-size:14px}
+
+/* ---------- Contact / IG ---------- */
+.contact{background:var(--ink);color:#fff;border-radius:20px;padding:clamp(36px,5vw,64px);text-align:center;margin:0 auto;max-width:var(--maxw)}
+.contact .ig{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:600}
+.contact h2{font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-.02em;margin:14px 0 16px}
+.contact p{color:rgba(255,255,255,.72);max-width:520px;margin:0 auto 30px;font-size:16px}
+.contact .btn-light{background:#fff;color:var(--ink)}
+.contact .btn-light:hover{transform:translateY(-2px);background:#f0f0f0}
+.contact .handle{display:inline-block;margin-top:22px;font-size:14px;color:rgba(255,255,255,.8);font-weight:600}
+
+/* ---------- Footer ---------- */
+footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
+.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:30px}
+.foot-grid h4{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:14px;font-weight:600}
+.foot-grid ul{list-style:none}
+.foot-grid li{margin-bottom:9px}
+.foot-grid a{font-size:14px;color:var(--ink);opacity:.8;transition:opacity .15s}
+.foot-grid a:hover{opacity:1}
+.foot-brand .brand{font-size:20px;margin-bottom:12px}
+.foot-brand p{font-size:14px;color:var(--ink-soft);max-width:300px}
+.foot-bottom{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:40px;padding-top:24px;flex-wrap:wrap;gap:12px}
+.foot-bottom p{font-size:13px;color:var(--ink-soft)}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1000px){
+  .grid{grid-template-columns:repeat(3,1fr)}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .foot-brand{grid-column:1/-1}
+}
+@media(max-width:860px){
+  .nav-links{display:none}
+  .menu-btn{display:block}
+  .hero{grid-template-columns:1fr;gap:36px;padding:48px 0 56px}
+  .hero-img{order:-1}
+  .about{grid-template-columns:1fr;gap:30px}
+  .about-img{order:-1}
+}
+@media(max-width:680px){
+  .grid{grid-template-columns:repeat(2,1fr);gap:16px}
+  .trust-grid{grid-template-columns:1fr}
+  .card-body{padding:13px 13px 15px}
+  .card-name{font-size:14px}
+  .view{padding:8px 11px;font-size:12px}
+  .bag span.label{display:none}
+  section{padding:48px 0}
+  .hero-meta{gap:20px}
+}
+@media(max-width:420px){
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============ ANNOUNCEMENT ============ -->
+<div class="announce"><span>Free tracked shipping on all pairs · Every sneaker verified before it ships</span></div>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="wrap nav">
+    <a href="#" class="brand"><span class="dot"></span>KTO Resells</a>
+
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#shop">Shop</a></li>
+      <li><a href="#shop">New Arrivals</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+
+    <div class="nav-right">
+      <a href="#" class="bag" aria-label="Bag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="label">Bag</span>
+        <span class="count">0</span>
+      </a>
+      <button class="menu-btn" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+
+  <!-- mobile drawer -->
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="#">Home</a>
+    <a href="#shop">Shop</a>
+    <a href="#shop">New Arrivals</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<!-- ============ HERO ============ -->
+<div class="wrap">
+  <section class="hero" style="padding-top:64px">
+    <div>
+      <span class="hero-eyebrow"><span class="dot"></span>100% Authentic · Verified Pairs</span>
+      <h1>Premium Sneakers.<br>Verified. Ready to Ship.</h1>
+      <p>KTO Resells sources clean, authentic sneakers and sells them at fair prices — no markups on hype, no surprises. Every pair is checked by hand before it leaves the shelf.</p>
+      <div class="hero-cta">
+        <a href="#shop" class="btn btn-primary">Shop Sneakers
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#about" class="btn btn-ghost">How it works</a>
+      </div>
+      <div class="hero-meta">
+        <div><strong>500+</strong>Pairs sold</div>
+        <div><strong>4.9★</strong>Buyer rating</div>
+        <div><strong>1–2 day</strong>Dispatch</div>
+      </div>
+    </div>
+
+    <!-- HERO IMAGE — swap the src to feature any pair -->
+    <div class="hero-img">
+      <img src="photos/IMG_6994.jpeg" alt="Air Jordan 11 Retro Gamma Blue" />
+      <div class="hero-tag">
+        <small>Now in stock</small>
+        <b>Air Jordan 11 “Gamma Blue”</b>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ SHOP GRID ============ -->
+<div class="wrap" id="shop">
+  <section style="padding-top:24px">
+    <div class="sec-head">
+      <div>
+        <h2>Featured pairs</h2>
+        <p>Hand-checked deadstock & gently worn — sizes are limited.</p>
+      </div>
+      <a href="#shop">View all</a>
+    </div>
+
+    <!-- Cards are generated from the PRODUCTS array in the script below.
+         To edit names, sizes, prices or images, just change that array. -->
+    <div class="grid" id="grid"></div>
+
+    <div class="checkout-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Secure checkout powered by Stripe — pay by card, Apple&nbsp;Pay or Google&nbsp;Pay. Each pair is one-of-one.
+    </div>
+  </section>
+</div>
+
+<!-- ============ TRUST ============ -->
+<section class="trust">
+  <div class="wrap">
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h3>Authenticity checked</h3>
+        <p>Every pair is inspected in-hand for materials, stitching and box details before we list it. If it’s not right, it doesn’t ship.</p>
+      </div>
+      <div class="trust-card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M14 9h4l4 4v4a1 1 0 0 1-1 1h-1"/><circle cx="7.5" cy="18.5" r="2.5"/><circle cx="17.5" cy="18.5" r="2.5"/></svg></div>
+        <h3>Fast shipping</h3>
+        <p>Orders are packed and dispatched within 1–2 business days with tracked, insured delivery on every order.</p>
+      </div>
+      <div class="trust-card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h3>Secure checkout</h3>
+        <p>Pay safely through encrypted, buyer-protected checkout. Your details stay private and your order is covered end to end.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABOUT ============ -->
+<div class="wrap">
+  <section class="about" id="about">
+    <div>
+      <h2>Sneakers done properly.</h2>
+      <p>KTO Resells started the way a lot of collections do — one too many pairs and a real obsession with getting them clean. These days we track down sought-after silhouettes, check every one ourselves, and pass them on without the hype tax.</p>
+      <p>No mystery sizing, no “as-is” gambles, no inflated prices. Just authentic pairs, photographed honestly, priced fairly. If you’ve got a question about a shoe, the person answering actually owns it.</p>
+      <div class="sig">— Kelechi, founder<span>KTO Resells</span></div>
+    </div>
+    <!-- ABOUT IMAGE — swap src to change -->
+    <div class="about-img">
+      <img src="photos/IMG_7005.jpeg" alt="Bottega Veneta Orbit sneaker" />
+    </div>
+  </section>
+</div>
+
+<!-- ============ CONTACT / INSTAGRAM ============ -->
+<div class="wrap">
+  <section id="contact" style="padding-top:24px">
+    <div class="contact">
+      <span class="ig">Direct message</span>
+      <h2>Need a size, a price, or a bundle?</h2>
+      <p>The fastest way to lock a pair is a DM. Message us on Instagram for sizes, availability, condition photos, or bundle deals on multiple pairs — we usually reply same day.</p>
+      <a href="https://instagram.com/ktoresells" target="_blank" rel="noopener" class="btn btn-light">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        Message Us
+      </a>
+      <a href="https://instagram.com/ktoresells" target="_blank" rel="noopener" class="handle">@ktoresells</a>
+    </div>
+  </section>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#" class="brand"><span class="dot"></span>KTO Resells</a>
+        <p>Clean, authentic sneakers — verified by hand and shipped fast. Based online, shipping worldwide.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="#shop">All sneakers</a></li>
+          <li><a href="#shop">New arrivals</a></li>
+          <li><a href="#shop">Jordan</a></li>
+          <li><a href="#shop">Nike</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <ul>
+          <li><a href="#contact">Sizing &amp; fit</a></li>
+          <li><a href="#contact">Shipping</a></li>
+          <li><a href="#contact">Returns</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Follow</h4>
+        <ul>
+          <li><a href="https://instagram.com/ktoresells" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="#contact">Email</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© <span id="year"></span> KTO Resells. All rights reserved.</p>
+      <p>Authentic pairs · Verified · Buyer protected</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   PRODUCTS — edit this list to change the shop.
+   img:   path to the photo (files live in /photos)
+   brand: small label above the name
+   name:  product title
+   size:  US size string
+   cond:  condition label
+   price: number (rendered with $ + retail strikethrough if set)
+   was:   optional original/retail price for the strikethrough
+   badge: optional corner badge text ("verified" gets the dot)
+   buy:   Stripe Payment Link URL for this exact pair  ← see below
+   sold:  set true to mark a pair as sold out
+
+   ───────────────────────────────────────────────────────────
+   HOW TO MAKE A PAIR ACTUALLY BUYABLE (Stripe — no server):
+   1. Make a free account at https://dashboard.stripe.com
+   2. Go to  Product catalog → Payment Links → + New
+   3. Add the product: name it the same as below, set the price,
+      set quantity to 1 (each pair is one-of-one), upload the photo.
+      Under "After payment" you can collect the shipping address.
+   4. Click Create link, copy the https://buy.stripe.com/... URL
+   5. Paste it into the matching `buy:` field below.
+   That's it — "Buy Now" sends the customer to Stripe's secure
+   hosted checkout (cards + Apple/Google Pay). Until you add a
+   link, "Buy Now" falls back to DM-to-buy on Instagram.
+   ───────────────────────────────────────────────────────────
+   ============================================================ */
+const PRODUCTS = [
+  { img:"photos/IMG_6990.jpeg", brand:"Nike",            name:'Air Force 1 Low CPFM "AIR"',      size:"US 10",  cond:"Deadstock",     price:420, was:null, badge:"verified", buy:"", sold:false },
+  { img:"photos/IMG_6994.jpeg", brand:"Air Jordan",      name:'Jordan 11 Retro "Gamma Blue"',    size:"US 9",   cond:"Deadstock",     price:300, was:null, badge:"verified", buy:"", sold:false },
+  { img:"photos/IMG_7002.jpeg", brand:"Air Jordan",      name:'Jordan 5 Retro "University Blue"',size:"US 8",   cond:"Deadstock",     price:265, was:null, badge:"verified", buy:"", sold:false },
+  { img:"photos/IMG_7005.jpeg", brand:"Bottega Veneta",  name:"Orbit Sneaker — Burgundy",        size:"US 9.5", cond:"Deadstock",     price:690, was:1150, badge:"verified", buy:"", sold:false },
+  { img:"photos/IMG_7011.jpeg", brand:"Nike",            name:'Air Force 1 Low CPFM "FLEA"',     size:"US 11",  cond:"Worn — Clean",  price:380, was:null, badge:"verified", buy:"", sold:false },
+  { img:"photos/IMG_6995.jpeg", brand:"Air Jordan",      name:'Jordan 11 Retro "Gamma Blue"',    size:"US 10",  cond:"Deadstock",     price:310, was:null, badge:"verified", buy:"", sold:false },
+  { img:"photos/IMG_7009.jpeg", brand:"Bottega Veneta",  name:"Orbit Sneaker — Black Suede",     size:"US 10",  cond:"Deadstock",     price:640, was:1050, badge:"verified", buy:"", sold:false },
+  { img:"photos/IMG_7008.jpeg", brand:"Bottega Veneta",  name:"Orbit Sneaker — Burgundy",        size:"US 8.5", cond:"Worn — Clean",  price:560, was:1150, badge:"verified", buy:"", sold:false },
+];
+
+/* Instagram fallback used when a pair has no Stripe link yet */
+const IG_DM = "https://instagram.com/ktoresells";
+
+/* ---- render cards ---- */
+const grid = document.getElementById('grid');
+grid.innerHTML = PRODUCTS.map(p => {
+  const href = p.sold ? '' : (p.buy || IG_DM);
+  const cta  = p.sold
+    ? `<span class="view sold-btn">Sold</span>`
+    : `<a href="${href}" class="view buy-btn"${p.buy?' target="_blank" rel="noopener"':''}>Buy Now</a>`;
+  return `
+  <article class="card${p.sold?' is-sold':''}">
+    <div class="card-img">
+      ${p.sold ? `<span class="badge sold-badge">Sold</span>`
+               : (p.badge ? `<span class="badge ${p.badge==='verified'?'verified':''}">${p.badge==='verified'?'Verified':p.badge}</span>` : ``)}
+      <img src="${p.img}" alt="${p.name}" loading="lazy" />
+    </div>
+    <div class="card-body">
+      <span class="card-brand">${p.brand}</span>
+      <h3 class="card-name">${p.name}</h3>
+      <div class="card-specs">
+        <span class="chip">Size ${p.size}</span>
+        <span class="chip">${p.cond}</span>
+      </div>
+      <div class="card-foot">
+        <span class="price">$${p.price}${p.was?` <small style="text-decoration:line-through">$${p.was}</small>`:``}</span>
+        ${cta}
+      </div>
+    </div>
+  </article>`;
+}).join('');
+
+/* ---- bag → jump to shop (real store: checkout happens per-pair) ---- */
+document.querySelector('.bag').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('shop').scrollIntoView({behavior:'smooth'});
+});
+
+/* ---- mobile menu ---- */
+const menuBtn = document.getElementById('menuBtn');
+const mobileNav = document.getElementById('mobileNav');
+menuBtn.addEventListener('click', () => mobileNav.classList.toggle('open'));
+mobileNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileNav.classList.remove('open')));
+
+/* ---- year ---- */
+document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
