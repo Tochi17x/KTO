@@ -372,52 +372,49 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
 <script>
 /* ============================================================
    PRODUCTS — edit this list to change the shop.
+   id:    stable code for this pair — MUST match the same id in
+          the Cloudflare Worker (worker/worker.js), which holds
+          the authoritative price. This is what makes it buyable.
    img:   path to the photo (files live in /photos)
    brand: small label above the name
    name:  product title
    size:  US size string
    cond:  condition label
-   price: number (rendered with $ + retail strikethrough if set)
+   price: number shown on the card (keep it equal to the Worker's)
    was:   optional original/retail price for the strikethrough
    badge: optional corner badge text ("verified" gets the dot)
-   buy:   Stripe Payment Link URL for this exact pair  ← see below
    sold:  set true to mark a pair as sold out
 
-   ───────────────────────────────────────────────────────────
-   HOW TO MAKE A PAIR ACTUALLY BUYABLE (Stripe — no server):
-   1. Make a free account at https://dashboard.stripe.com
-   2. Go to  Product catalog → Payment Links → + New
-   3. Add the product: name it the same as below, set the price,
-      set quantity to 1 (each pair is one-of-one), upload the photo.
-      Under "After payment" you can collect the shipping address.
-   4. Click Create link, copy the https://buy.stripe.com/... URL
-   5. Paste it into the matching `buy:` field below.
-   That's it — "Buy Now" sends the customer to Stripe's secure
-   hosted checkout (cards + Apple/Google Pay). Until you add a
-   link, "Buy Now" falls back to DM-to-buy on Instagram.
-   ───────────────────────────────────────────────────────────
+   HOW CHECKOUT WORKS:
+   Clicking "Buy Now" sends this id to the Worker, which creates a
+   secure Stripe Checkout Session and returns its URL. The secret
+   key never touches this page. To add a pair later: add it here
+   AND in worker/worker.js with the same id, then redeploy both.
    ============================================================ */
 const PRODUCTS = [
-  { img:"photos/IMG_6990.jpeg", brand:"Nike",            name:'Air Force 1 Low CPFM "AIR"',      size:"US 10",  cond:"Deadstock",     price:420, was:null, badge:"verified", buy:"", sold:false },
-  { img:"photos/IMG_6994.jpeg", brand:"Air Jordan",      name:'Jordan 11 Retro "Gamma Blue"',    size:"US 9",   cond:"Deadstock",     price:300, was:null, badge:"verified", buy:"", sold:false },
-  { img:"photos/IMG_7002.jpeg", brand:"Air Jordan",      name:'Jordan 5 Retro "University Blue"',size:"US 8",   cond:"Deadstock",     price:265, was:null, badge:"verified", buy:"", sold:false },
-  { img:"photos/IMG_7005.jpeg", brand:"Bottega Veneta",  name:"Orbit Sneaker — Burgundy",        size:"US 9.5", cond:"Deadstock",     price:690, was:1150, badge:"verified", buy:"", sold:false },
-  { img:"photos/IMG_7011.jpeg", brand:"Nike",            name:'Air Force 1 Low CPFM "FLEA"',     size:"US 11",  cond:"Worn — Clean",  price:380, was:null, badge:"verified", buy:"", sold:false },
-  { img:"photos/IMG_6995.jpeg", brand:"Air Jordan",      name:'Jordan 11 Retro "Gamma Blue"',    size:"US 10",  cond:"Deadstock",     price:310, was:null, badge:"verified", buy:"", sold:false },
-  { img:"photos/IMG_7009.jpeg", brand:"Bottega Veneta",  name:"Orbit Sneaker — Black Suede",     size:"US 10",  cond:"Deadstock",     price:640, was:1050, badge:"verified", buy:"", sold:false },
-  { img:"photos/IMG_7008.jpeg", brand:"Bottega Veneta",  name:"Orbit Sneaker — Burgundy",        size:"US 8.5", cond:"Worn — Clean",  price:560, was:1150, badge:"verified", buy:"", sold:false },
+  { id:"af1-air-10",       img:"photos/IMG_6990.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "AIR"',      size:"US 10",  cond:"Deadstock",    price:420, was:null, badge:"verified", sold:false },
+  { id:"aj11-gamma-9",     img:"photos/IMG_6994.jpeg", brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    size:"US 9",   cond:"Deadstock",    price:300, was:null, badge:"verified", sold:false },
+  { id:"aj5-unc-8",        img:"photos/IMG_7002.jpeg", brand:"Air Jordan",     name:'Jordan 5 Retro "University Blue"',size:"US 8",   cond:"Deadstock",    price:265, was:null, badge:"verified", sold:false },
+  { id:"bv-orbit-burg-95", img:"photos/IMG_7005.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        size:"US 9.5", cond:"Deadstock",    price:690, was:1150, badge:"verified", sold:false },
+  { id:"af1-flea-11",      img:"photos/IMG_7011.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "FLEA"',     size:"US 11",  cond:"Worn — Clean", price:380, was:null, badge:"verified", sold:false },
+  { id:"aj11-gamma-10",    img:"photos/IMG_6995.jpeg", brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    size:"US 10",  cond:"Deadstock",    price:310, was:null, badge:"verified", sold:false },
+  { id:"bv-orbit-black-10",img:"photos/IMG_7009.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Black Suede",     size:"US 10",  cond:"Deadstock",    price:640, was:1050, badge:"verified", sold:false },
+  { id:"bv-orbit-burg-85", img:"photos/IMG_7008.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        size:"US 8.5", cond:"Worn — Clean", price:560, was:1150, badge:"verified", sold:false },
 ];
 
-/* Instagram fallback used when a pair has no Stripe link yet */
+/* ── CHECKOUT CONFIG ──────────────────────────────────────────
+   Paste your deployed Cloudflare Worker URL here, e.g.
+   "https://kto-checkout.yourname.workers.dev"
+   While it's empty, Buy Now falls back to the Instagram DM.    */
+const CHECKOUT_ENDPOINT = "";
 const IG_DM = "https://instagram.com/ktoresells";
 
 /* ---- render cards ---- */
 const grid = document.getElementById('grid');
-grid.innerHTML = PRODUCTS.map(p => {
-  const href = p.sold ? '' : (p.buy || IG_DM);
-  const cta  = p.sold
+grid.innerHTML = PRODUCTS.map((p, i) => {
+  const cta = p.sold
     ? `<span class="view sold-btn">Sold</span>`
-    : `<a href="${href}" class="view buy-btn"${p.buy?' target="_blank" rel="noopener"':''}>Buy Now</a>`;
+    : `<button type="button" class="view buy-btn" data-i="${i}">Buy Now</button>`;
   return `
   <article class="card${p.sold?' is-sold':''}">
     <div class="card-img">
@@ -439,6 +436,35 @@ grid.innerHTML = PRODUCTS.map(p => {
     </div>
   </article>`;
 }).join('');
+
+/* ---- Buy Now → ask the Worker for a Stripe Checkout URL, then go ---- */
+async function checkout(btn){
+  const p = PRODUCTS[btn.dataset.i];
+  // No Worker configured yet → fall back to Instagram DM
+  if(!CHECKOUT_ENDPOINT){
+    window.open(`${IG_DM}`, "_blank", "noopener");
+    return;
+  }
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = "…";
+  try{
+    const res = await fetch(`${CHECKOUT_ENDPOINT}/checkout`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ id: p.id })
+    });
+    const data = await res.json();
+    if(data.url){ window.location = data.url; return; }     // → Stripe hosted checkout
+    throw new Error(data.error || "Checkout unavailable");
+  }catch(err){
+    alert("Sorry — checkout couldn't start. DM @ktoresells and we'll sort it.\n\n("+err.message+")");
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+grid.addEventListener("click", e => {
+  const btn = e.target.closest(".buy-btn");
+  if(btn) checkout(btn);
+});
 
 /* ---- bag → jump to shop (real store: checkout happens per-pair) ---- */
 document.querySelector('.bag').addEventListener('click', e => {
