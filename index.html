@@ -371,80 +371,75 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
 
 <script>
 /* ============================================================
-   PRODUCTS — edit this list to change the shop.
-   id:    stable code for this pair — MUST match the same id in
-          the Cloudflare Worker (worker/worker.js), which holds
-          the authoritative price. This is what makes it buyable.
-   img:   path to the photo (files live in /photos)
-   brand: small label above the name
-   name:  product title
-   size:  US size string
-   cond:  condition label
-   price: number shown on the card (keep it equal to the Worker's)
-   was:   optional original/retail price for the strikethrough
-   badge: optional corner badge text ("verified" gets the dot)
-   sold:  set true to mark a pair as sold out
+   The shop now loads its pairs LIVE from the Worker (/products),
+   which reads them from your admin dashboard. Edit inventory at
+   /admin.html — no code changes needed.
 
-   HOW CHECKOUT WORKS:
-   Clicking "Buy Now" sends this id to the Worker, which creates a
-   secure Stripe Checkout Session and returns its URL. The secret
-   key never touches this page. To add a pair later: add it here
-   AND in worker/worker.js with the same id, then redeploy both.
+   FALLBACK_PRODUCTS below is only shown if that fetch ever fails,
+   so the page is never empty.
    ============================================================ */
-const PRODUCTS = [
-  { id:"af1-air-10",       img:"photos/IMG_6990.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "AIR"',      size:"US 10",  cond:"Deadstock",    price:420, was:null, badge:"verified", sold:false },
-  { id:"aj11-gamma-9",     img:"photos/IMG_6994.jpeg", brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    size:"US 9",   cond:"Deadstock",    price:300, was:null, badge:"verified", sold:false },
-  { id:"aj5-unc-8",        img:"photos/IMG_7002.jpeg", brand:"Air Jordan",     name:'Jordan 5 Retro "University Blue"',size:"US 8",   cond:"Deadstock",    price:265, was:null, badge:"verified", sold:false },
-  { id:"bv-orbit-burg-95", img:"photos/IMG_7005.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        size:"US 9.5", cond:"Deadstock",    price:690, was:1150, badge:"verified", sold:false },
-  { id:"af1-flea-11",      img:"photos/IMG_7011.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "FLEA"',     size:"US 11",  cond:"Worn — Clean", price:380, was:null, badge:"verified", sold:false },
-  { id:"aj11-gamma-10",    img:"photos/IMG_6995.jpeg", brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    size:"US 10",  cond:"Deadstock",    price:310, was:null, badge:"verified", sold:false },
-  { id:"bv-orbit-black-10",img:"photos/IMG_7009.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Black Suede",     size:"US 10",  cond:"Deadstock",    price:640, was:1050, badge:"verified", sold:false },
-  { id:"bv-orbit-burg-85", img:"photos/IMG_7008.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        size:"US 8.5", cond:"Worn — Clean", price:560, was:1150, badge:"verified", sold:false },
-];
-
-/* ── CHECKOUT CONFIG ──────────────────────────────────────────
-   Paste your deployed Cloudflare Worker URL here, e.g.
-   "https://kto-checkout.yourname.workers.dev"
-   While it's empty, Buy Now falls back to the Instagram DM.    */
 const CHECKOUT_ENDPOINT = "https://kto-checkout.tochiorji4.workers.dev";
 const IG_DM = "https://instagram.com/ktoresells";
 
-/* ---- render cards ---- */
+const FALLBACK_PRODUCTS = [
+  { id:"af1-air-10",       img:"photos/IMG_6990.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "AIR"',      size:"US 10",  cond:"Deadstock",    price:420, was:null, sold:false },
+  { id:"aj11-gamma-9",     img:"photos/IMG_6994.jpeg", brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    size:"US 9",   cond:"Deadstock",    price:300, was:null, sold:false },
+  { id:"aj5-unc-8",        img:"photos/IMG_7002.jpeg", brand:"Air Jordan",     name:'Jordan 5 Retro "University Blue"',size:"US 8",   cond:"Deadstock",    price:265, was:null, sold:false },
+  { id:"bv-orbit-burg-95", img:"photos/IMG_7005.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        size:"US 9.5", cond:"Deadstock",    price:690, was:1150, sold:false },
+  { id:"af1-flea-11",      img:"photos/IMG_7011.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "FLEA"',     size:"US 11",  cond:"Worn — Clean", price:380, was:null, sold:false },
+  { id:"aj11-gamma-10",    img:"photos/IMG_6995.jpeg", brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    size:"US 10",  cond:"Deadstock",    price:310, was:null, sold:false },
+  { id:"bv-orbit-black-10",img:"photos/IMG_7009.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Black Suede",     size:"US 10",  cond:"Deadstock",    price:640, was:1050, sold:false },
+  { id:"bv-orbit-burg-85", img:"photos/IMG_7008.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        size:"US 8.5", cond:"Worn — Clean", price:560, was:1150, sold:false },
+];
+
 const grid = document.getElementById('grid');
-grid.innerHTML = PRODUCTS.map((p, i) => {
-  const cta = p.sold
-    ? `<span class="view sold-btn">Sold</span>`
-    : `<button type="button" class="view buy-btn" data-i="${i}">Buy Now</button>`;
-  return `
-  <article class="card${p.sold?' is-sold':''}">
-    <div class="card-img">
-      ${p.sold ? `<span class="badge sold-badge">Sold</span>`
-               : (p.badge ? `<span class="badge ${p.badge==='verified'?'verified':''}">${p.badge==='verified'?'Verified':p.badge}</span>` : ``)}
-      <img src="${p.img}" alt="${p.name}" loading="lazy" />
-    </div>
-    <div class="card-body">
-      <span class="card-brand">${p.brand}</span>
-      <h3 class="card-name">${p.name}</h3>
-      <div class="card-specs">
-        <span class="chip">Size ${p.size}</span>
-        <span class="chip">${p.cond}</span>
+let PRODUCTS = [];
+
+/* ---- load live inventory, fall back if needed ---- */
+(async function loadProducts(){
+  grid.innerHTML = `<p style="color:var(--ink-soft);grid-column:1/-1;padding:20px 0">Loading sneakers…</p>`;
+  try{
+    const res = await fetch(`${CHECKOUT_ENDPOINT}/products`, { cache:"no-store" });
+    const data = await res.json();
+    PRODUCTS = (data.products && data.products.length) ? data.products : FALLBACK_PRODUCTS;
+  }catch{
+    PRODUCTS = FALLBACK_PRODUCTS;
+  }
+  renderProducts();
+})();
+
+function renderProducts(){
+  grid.innerHTML = PRODUCTS.map((p, i) => {
+    const cta = p.sold
+      ? `<span class="view sold-btn">Sold</span>`
+      : `<button type="button" class="view buy-btn" data-i="${i}">Buy Now</button>`;
+    return `
+    <article class="card${p.sold?' is-sold':''}">
+      <div class="card-img">
+        ${p.sold ? `<span class="badge sold-badge">Sold</span>`
+                 : `<span class="badge verified">Verified</span>`}
+        <img src="${p.img}" alt="${p.name}" loading="lazy" />
       </div>
-      <div class="card-foot">
-        <span class="price">$${p.price}${p.was?` <small style="text-decoration:line-through">$${p.was}</small>`:``}</span>
-        ${cta}
+      <div class="card-body">
+        <span class="card-brand">${p.brand}</span>
+        <h3 class="card-name">${p.name}</h3>
+        <div class="card-specs">
+          <span class="chip">Size ${p.size}</span>
+          <span class="chip">${p.cond}</span>
+        </div>
+        <div class="card-foot">
+          <span class="price">$${p.price}${p.was?` <small style="text-decoration:line-through">$${p.was}</small>`:``}</span>
+          ${cta}
+        </div>
       </div>
-    </div>
-  </article>`;
-}).join('');
+    </article>`;
+  }).join('');
+}
 
 /* ---- Buy Now → ask the Worker for a Stripe Checkout URL, then go ---- */
 async function checkout(btn){
   const p = PRODUCTS[btn.dataset.i];
-  // No Worker configured yet → fall back to Instagram DM
-  if(!CHECKOUT_ENDPOINT){
-    window.open(`${IG_DM}`, "_blank", "noopener");
-    return;
-  }
+  if(!CHECKOUT_ENDPOINT){ window.open(IG_DM, "_blank", "noopener"); return; }
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = "…";
   try{
