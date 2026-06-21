@@ -1,6 +1,7 @@
 /* KTO Resells - Store + Admin Worker (Cloudflare)
    Bindings: KV namespace as KV, R2 bucket as BUCKET
-   Secrets: STRIPE_SECRET_KEY, ADMIN_PASSWORD, AUTH_SECRET */
+   Secrets: STRIPE_SECRET_KEY, ADMIN_PASSWORD, AUTH_SECRET
+            STRIPE_WEBHOOK_SECRET (orders), SHIPPO_TOKEN (shipping) */
 
 const ALLOWED_ORIGINS = [
   "https://ktoresell.shop",
@@ -25,6 +26,8 @@ const SHIP_TO = ["US","CA","GB","IE","AU","DE","FR","NL","NG"];
 const TOKEN_TTL_SECONDS = 60 * 60 * 8;
 const MAX_LOGIN_FAILS = 8;
 const LOGIN_WINDOW_SECS = 900;
+const DEFAULT_WEIGHT = "2";        // lb, used for Shippo line items
+const MAX_ORDERS_KEPT = 1000;
 
 function cors(origin){
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -53,21 +56,25 @@ function safeEqual(a, b){
   for(let i=0;i<a.length;i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return r === 0;
 }
-async function hmac(secret, data){
-  const key = await crypto.subtle.importKey("raw", enc.encode(secret), {name:"HMAC",hash:"SHA-256"}, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
+async function hmacKey(secret){
+  return crypto.subtle.importKey("raw", enc.encode(secret), {name:"HMAC",hash:"SHA-256"}, false, ["sign"]);
+}
+async function hmacB64(secret, data){
+  const sig = await crypto.subtle.sign("HMAC", await hmacKey(secret), enc.encode(data));
   return b64url(sig);
+}
+async function hmacHex(secret, data){
+  const sig = await crypto.subtle.sign("HMAC", await hmacKey(secret), enc.encode(data));
+  return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 async function makeToken(secret){
   const payload = b64url(enc.encode(JSON.stringify({ exp: Math.floor(Date.now()/1000) + TOKEN_TTL_SECONDS })));
-  const sig = await hmac(secret, payload);
-  return payload + "." + sig;
+  return payload + "." + await hmacB64(secret, payload);
 }
 async function verifyToken(secret, token){
   if(!token || token.indexOf(".")<0) return false;
   const parts = token.split(".");
-  const expect = await hmac(secret, parts[0]);
-  if(!safeEqual(parts[1], expect)) return false;
+  if(!safeEqual(parts[1], await hmacB64(secret, parts[0]))) return false;
   try{
     const data = JSON.parse(b64urlToStr(parts[0]));
     return data.exp && data.exp > Math.floor(Date.now()/1000);
@@ -82,6 +89,64 @@ async function getCatalog(env){
   if(raw){ try{ return JSON.parse(raw); }catch(e){} }
   return DEFAULT_CATALOG;
 }
+async function getOrders(env){
+  const raw = await env.KV.get("orders");
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return [];
+}
+
+/* verify Stripe webhook signature: header "t=...,v1=..." over `${t}.${body}` */
+async function stripeSigOK(secret, sigHeader, rawBody){
+  if(!sigHeader) return false;
+  const parts = Object.fromEntries(sigHeader.split(",").map(kv => kv.split("=")));
+  if(!parts.t || !parts.v1) return false;
+  const expect = await hmacHex(secret, `${parts.t}.${rawBody}`);
+  if(!safeEqual(parts.v1, expect)) return false;
+  // reject events older than 10 minutes (replay protection)
+  return Math.abs(Math.floor(Date.now()/1000) - Number(parts.t)) < 600;
+}
+
+/* push an order into the seller's Shippo account (creates an Order to fulfill) */
+async function pushToShippo(token, order){
+  const a = order.address || {};
+  const body = {
+    order_number: order.id,
+    order_status: "PAID",
+    placed_at: order.date,
+    to_address: {
+      name: order.customer_name || "",
+      street1: a.line1 || "",
+      street2: a.line2 || "",
+      city: a.city || "",
+      state: a.state || "",
+      zip: a.postal_code || "",
+      country: a.country || "US",
+      phone: order.phone || "",
+      email: order.email || "",
+    },
+    line_items: [{
+      title: order.item_name || "Sneakers",
+      quantity: 1,
+      total_price: String(order.amount || "0"),
+      currency: (order.currency || "USD").toUpperCase(),
+      weight: DEFAULT_WEIGHT,
+      weight_unit: "lb",
+    }],
+    placed_at: order.date,
+    weight: DEFAULT_WEIGHT,
+    weight_unit: "lb",
+    total_price: String(order.amount || "0"),
+    currency: (order.currency || "USD").toUpperCase(),
+  };
+  const r = await fetch("https://api.goshippo.com/orders/", {
+    method:"POST",
+    headers:{ "Authorization":"ShippoToken "+token, "Content-Type":"application/json" },
+    body: JSON.stringify(body),
+  });
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) return { ok:false, msg:(d.detail||d.__all__||("HTTP "+r.status)) };
+  return { ok:true, id:d.object_id };
+}
 
 export default {
   async fetch(request, env){
@@ -91,6 +156,66 @@ export default {
 
     if(request.method === "OPTIONS")
       return new Response(null, { status:204, headers:cors(origin) });
+
+    /* ---- Stripe webhook: order completed ---- */
+    if(request.method==="POST" && path==="/stripe/webhook"){
+      if(!env.STRIPE_WEBHOOK_SECRET) return new Response("not configured", {status:500});
+      const raw = await request.text();
+      const sig = request.headers.get("Stripe-Signature");
+      if(!(await stripeSigOK(env.STRIPE_WEBHOOK_SECRET, sig, raw)))
+        return new Response("bad signature", {status:400});
+
+      let event; try{ event = JSON.parse(raw); }catch(e){ return new Response("bad json",{status:400}); }
+      if(event.type === "checkout.session.completed"){
+        const s = event.data.object || {};
+        const cust = s.customer_details || {};
+        const ship = s.shipping_details || s.shipping || (s.collected_information && s.collected_information.shipping_details) || {};
+        const addr = ship.address || cust.address || {};
+        const pid = s.client_reference_id || "";
+
+        const cat = await getCatalog(env);
+        const item = cat.find(p => p.id === pid);
+
+        const order = {
+          id: s.id,
+          date: new Date().toISOString(),
+          product_id: pid,
+          item_name: item ? (item.name + " - " + item.size) : (s.metadata && s.metadata.name) || "Order",
+          amount: (s.amount_total != null ? s.amount_total/100 : null),
+          currency: s.currency || "usd",
+          customer_name: ship.name || cust.name || "",
+          email: cust.email || "",
+          phone: cust.phone || ship.phone || "",
+          address: {
+            line1: addr.line1||"", line2: addr.line2||"", city: addr.city||"",
+            state: addr.state||"", postal_code: addr.postal_code||"", country: addr.country||"",
+          },
+          shippo: "pending",
+        };
+
+        // decrement stock so the pair hides itself
+        if(item){
+          item.stock = Math.max(0, (Number(item.stock)||0) - 1);
+          await env.KV.put("catalog", JSON.stringify(cat));
+        }
+
+        // push to Shippo (best effort)
+        if(env.SHIPPO_TOKEN){
+          try{
+            const r = await pushToShippo(env.SHIPPO_TOKEN, order);
+            order.shippo = r.ok ? ("created:"+r.id) : ("error:"+r.msg);
+          }catch(e){ order.shippo = "error:"+e.message; }
+        } else {
+          order.shippo = "no-token";
+        }
+
+        const orders = await getOrders(env);
+        orders.unshift(order);
+        if(orders.length > MAX_ORDERS_KEPT) orders.length = MAX_ORDERS_KEPT;
+        await env.KV.put("orders", JSON.stringify(orders));
+      }
+      return new Response("ok", {status:200});
+    }
 
     if(request.method==="GET" && path==="/products"){
       const cat = await getCatalog(env);
@@ -130,6 +255,7 @@ export default {
       form.set("line_items[0][price_data][unit_amount]", String(Math.round(Number(item.price)*100)));
       form.set("line_items[0][price_data][product_data][name]", item.name + " - " + item.size);
       form.set("client_reference_id", item.id);
+      form.set("metadata[name]", item.name + " - " + item.size);
       form.set("phone_number_collection[enabled]","true");
       SHIP_TO.forEach((c,i)=> form.set("shipping_address_collection[allowed_countries]["+i+"]", c));
 
@@ -166,6 +292,10 @@ export default {
 
     if(request.method==="GET" && path==="/admin/products"){
       return json({ products: await getCatalog(env) }, 200, origin);
+    }
+
+    if(request.method==="GET" && path==="/admin/orders"){
+      return json({ orders: await getOrders(env) }, 200, origin);
     }
 
     if(request.method==="POST" && path==="/admin/save"){

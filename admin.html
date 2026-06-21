@@ -98,18 +98,33 @@ h2.section{font-size:14px;color:var(--soft);font-weight:600;letter-spacing:.04em
     <div class="wrap">
       <div class="brand"><span class="dot"></span>KTO Admin</div>
       <div class="actions">
-        <span class="count" id="count"></span>
-        <button class="btn ghost" id="addBtn">+ Add pair</button>
-        <button class="btn" id="saveBtn">Save all changes</button>
+        <button class="btn ghost" id="tabInv">Inventory</button>
+        <button class="btn ghost" id="tabOrders">Orders</button>
         <button class="btn ghost" id="logoutBtn">Log out</button>
       </div>
     </div>
   </div>
 
-  <div class="wrap">
+  <!-- INVENTORY view -->
+  <div class="wrap" id="invView">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="count" id="count"></span>
+      <div style="display:flex;gap:10px">
+        <button class="btn ghost" id="addBtn">+ Add pair</button>
+        <button class="btn" id="saveBtn">Save all changes</button>
+      </div>
+    </div>
     <div class="savebar msg" id="saveMsg"></div>
-    <h2 class="section">Inventory</h2>
     <div id="list"></div>
+  </div>
+
+  <!-- ORDERS view -->
+  <div class="wrap hidden" id="ordersView">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span class="count" id="ordersCount"></span>
+      <button class="btn ghost" id="refreshOrders">Refresh</button>
+    </div>
+    <div id="orders"></div>
   </div>
 </div>
 
@@ -261,6 +276,45 @@ $("#saveBtn").addEventListener("click", async ()=>{
   }catch(err){ msg.className="savebar msg err"; msg.textContent=err.message; }
   finally{ btn.disabled=false; btn.textContent="Save all changes"; }
 });
+
+/* ============ orders ============ */
+const invView=$("#invView"), ordersView=$("#ordersView"), ordersEl=$("#orders");
+$("#tabInv").addEventListener("click", ()=>{ invView.classList.remove("hidden"); ordersView.classList.add("hidden"); });
+$("#tabOrders").addEventListener("click", ()=>{ invView.classList.add("hidden"); ordersView.classList.remove("hidden"); loadOrders(); });
+$("#refreshOrders").addEventListener("click", loadOrders);
+
+async function loadOrders(){
+  ordersEl.innerHTML = `<p style="color:var(--soft)">Loading orders…</p>`;
+  const r = await fetch(API+"/admin/orders",{ headers:authHeaders() });
+  if(r.status===401){ sessionStorage.removeItem(TKEY); location.reload(); return; }
+  const d = await r.json();
+  const orders = d.orders||[];
+  $("#ordersCount").textContent = orders.length + " order" + (orders.length===1?"":"s");
+  if(!orders.length){ ordersEl.innerHTML = `<p style="color:var(--soft)">No orders yet. They'll appear here automatically after a sale.</p>`; return; }
+  ordersEl.innerHTML = orders.map(o=>{
+    const a=o.address||{};
+    const addr=[a.line1,a.line2,a.city,a.state,a.postal_code,a.country].filter(Boolean).join(", ");
+    const ship = (o.shippo||"").startsWith("created") ? '<span class="pill live">In Shippo</span>'
+               : (o.shippo||"").startsWith("error") ? '<span class="pill sold">Shippo error</span>'
+               : (o.shippo==="no-token") ? '<span class="pill hidden-pill">Shippo off</span>'
+               : '<span class="pill hidden-pill">'+esc(o.shippo||'')+'</span>';
+    return `<div class="card" style="grid-template-columns:1fr">
+      <div>
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+          <strong style="font-size:15px">${esc(o.item_name||'Order')}</strong>
+          <span style="font-weight:800">$${esc(o.amount!=null?o.amount:'?')}</span>
+        </div>
+        <div style="font-size:13px;color:var(--soft);margin:6px 0 12px">${new Date(o.date).toLocaleString()} ${ship}</div>
+        <div class="fields">
+          <div class="field"><span>Customer</span><div>${esc(o.customer_name||'-')}</div></div>
+          <div class="field"><span>Email</span><div>${esc(o.email||'-')}</div></div>
+          <div class="field"><span>Phone</span><div>${esc(o.phone||'-')}</div></div>
+          <div class="field full"><span>Ship to</span><div>${esc(addr||'-')}</div></div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
 
 /* ============ boot ============ */
 if(token()) showDash();
