@@ -1,27 +1,6 @@
-/* ============================================================
-   KTO Resells — Store + Admin Worker (Cloudflare)
-   ------------------------------------------------------------
-   One Worker that powers everything:
-     • GET  /products        public  → live catalog for the store
-     • POST /checkout        public  → Stripe Checkout (price from KV)
-     • POST /admin/login     → password → signed session token
-     • GET  /admin/products  token   → full catalog (incl. hidden)
-     • POST /admin/save      token   → save the whole catalog
-     • POST /admin/upload    token   → upload an image to R2
-     • GET  /img/<key>       public  → serve an uploaded image
-
-   Bindings required (set in Worker → Settings):
-     • KV namespace  bound as  KV
-     • R2 bucket     bound as  BUCKET
-   Secrets required (Worker → Settings → Variables and Secrets):
-     • STRIPE_SECRET_KEY   your sk_test_... / sk_live_...
-     • ADMIN_PASSWORD      the password for the admin dashboard
-     • AUTH_SECRET         a long random string (signs login tokens)
-
-   Security: password lives only here (encrypted secret), compared
-   in constant time; login is rate-limited; edits require a signed
-   token that expires; CORS is locked to your store origins.
-   ============================================================ */
+/* KTO Resells - Store + Admin Worker (Cloudflare)
+   Bindings: KV namespace as KV, R2 bucket as BUCKET
+   Secrets: STRIPE_SECRET_KEY, ADMIN_PASSWORD, AUTH_SECRET */
 
 const ALLOWED_ORIGINS = [
   "https://ktoresell.shop",
@@ -29,28 +8,24 @@ const ALLOWED_ORIGINS = [
   "https://tochi17x.github.io",
 ];
 
-// Used the FIRST time only, if the KV catalog is still empty.
-// After that, the admin dashboard is the source of truth.
 const DEFAULT_CATALOG = [
-  { id:"af1-air-10",       brand:"Nike",           name:'Air Force 1 Low CPFM "AIR"',      desc:"Cactus Plant Flea Market AF1 with the oversized AIR detailing.", size:"US 10",  cond:"Deadstock",    price:420, was:null, img:"photos/IMG_6990.jpeg", stock:1, active:true },
-  { id:"aj11-gamma-9",     brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    desc:"Classic patent leather 11 with gamma blue accents.",            size:"US 9",   cond:"Deadstock",    price:300, was:null, img:"photos/IMG_6994.jpeg", stock:1, active:true },
-  { id:"aj5-unc-8",        brand:"Air Jordan",     name:'Jordan 5 Retro "University Blue"', desc:"Black suede upper with university blue detailing.",              size:"US 8",   cond:"Deadstock",    price:265, was:null, img:"photos/IMG_7002.jpeg", stock:1, active:true },
-  { id:"bv-orbit-burg-95", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        desc:"Burgundy mesh and silver chrome runner.",                       size:"US 9.5", cond:"Deadstock",    price:690, was:1150, img:"photos/IMG_7005.jpeg", stock:1, active:true },
-  { id:"af1-flea-11",      brand:"Nike",           name:'Air Force 1 Low CPFM "FLEA"',     desc:"CPFM AF1, FLEA/AIR puffy lettering. Lightly worn, clean.",       size:"US 11",  cond:"Worn — Clean", price:380, was:null, img:"photos/IMG_7011.jpeg", stock:1, active:true },
-  { id:"aj11-gamma-10",    brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    desc:"Classic patent leather 11 with gamma blue accents.",            size:"US 10",  cond:"Deadstock",    price:310, was:null, img:"photos/IMG_6995.jpeg", stock:1, active:true },
-  { id:"bv-orbit-black-10",brand:"Bottega Veneta", name:"Orbit Sneaker — Black Suede",     desc:"Blacked-out suede and mesh Orbit runner.",                      size:"US 10",  cond:"Deadstock",    price:640, was:1050, img:"photos/IMG_7009.jpeg", stock:1, active:true },
-  { id:"bv-orbit-burg-85", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        desc:"Burgundy mesh and silver chrome runner. Lightly worn.",         size:"US 8.5", cond:"Worn — Clean", price:560, was:1150, img:"photos/IMG_7008.jpeg", stock:1, active:true },
+  { id:"af1-air-10",       brand:"Nike",           name:'Air Force 1 Low CPFM AIR',      desc:"Cactus Plant Flea Market AF1 with oversized AIR detailing.", size:"US 10",  cond:"Deadstock",    price:420, was:null, img:"photos/IMG_6990.jpeg", stock:1, active:true },
+  { id:"aj11-gamma-9",     brand:"Air Jordan",     name:'Jordan 11 Retro Gamma Blue',    desc:"Classic patent leather 11 with gamma blue accents.",         size:"US 9",   cond:"Deadstock",    price:300, was:null, img:"photos/IMG_6994.jpeg", stock:1, active:true },
+  { id:"aj5-unc-8",        brand:"Air Jordan",     name:'Jordan 5 Retro University Blue', desc:"Black suede upper with university blue detailing.",          size:"US 8",   cond:"Deadstock",    price:265, was:null, img:"photos/IMG_7002.jpeg", stock:1, active:true },
+  { id:"bv-orbit-burg-95", brand:"Bottega Veneta", name:"Orbit Sneaker - Burgundy",      desc:"Burgundy mesh and silver chrome runner.",                    size:"US 9.5", cond:"Deadstock",    price:690, was:1150, img:"photos/IMG_7005.jpeg", stock:1, active:true },
+  { id:"af1-flea-11",      brand:"Nike",           name:'Air Force 1 Low CPFM FLEA',     desc:"CPFM AF1, FLEA/AIR puffy lettering. Lightly worn, clean.",    size:"US 11",  cond:"Worn - Clean", price:380, was:null, img:"photos/IMG_7011.jpeg", stock:1, active:true },
+  { id:"aj11-gamma-10",    brand:"Air Jordan",     name:'Jordan 11 Retro Gamma Blue',    desc:"Classic patent leather 11 with gamma blue accents.",         size:"US 10",  cond:"Deadstock",    price:310, was:null, img:"photos/IMG_6995.jpeg", stock:1, active:true },
+  { id:"bv-orbit-black-10",brand:"Bottega Veneta", name:"Orbit Sneaker - Black Suede",   desc:"Blacked-out suede and mesh Orbit runner.",                   size:"US 10",  cond:"Deadstock",    price:640, was:1050, img:"photos/IMG_7009.jpeg", stock:1, active:true },
+  { id:"bv-orbit-burg-85", brand:"Bottega Veneta", name:"Orbit Sneaker - Burgundy",      desc:"Burgundy mesh and silver chrome runner. Lightly worn.",      size:"US 8.5", cond:"Worn - Clean", price:560, was:1150, img:"photos/IMG_7008.jpeg", stock:1, active:true },
 ];
 
 const SUCCESS_URL = "https://ktoresell.shop/?checkout=success";
 const CANCEL_URL  = "https://ktoresell.shop/?checkout=cancelled";
 const SHIP_TO = ["US","CA","GB","IE","AU","DE","FR","NL","NG"];
+const TOKEN_TTL_SECONDS = 60 * 60 * 8;
+const MAX_LOGIN_FAILS = 8;
+const LOGIN_WINDOW_SECS = 900;
 
-const TOKEN_TTL_SECONDS = 60 * 60 * 8;   // admin session lasts 8h
-const MAX_LOGIN_FAILS   = 8;             // per IP per window
-const LOGIN_WINDOW_SECS = 900;           // 15 min
-
-/* ---------------- helpers ---------------- */
 function cors(origin){
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
@@ -72,7 +47,6 @@ function b64urlToStr(s){
   s = s.replace(/-/g,"+").replace(/_/g,"/");
   return atob(s);
 }
-// constant-time string compare
 function safeEqual(a, b){
   if(typeof a!=="string" || typeof b!=="string" || a.length!==b.length) return false;
   let r = 0;
@@ -87,17 +61,17 @@ async function hmac(secret, data){
 async function makeToken(secret){
   const payload = b64url(enc.encode(JSON.stringify({ exp: Math.floor(Date.now()/1000) + TOKEN_TTL_SECONDS })));
   const sig = await hmac(secret, payload);
-  return `${payload}.${sig}`;
+  return payload + "." + sig;
 }
 async function verifyToken(secret, token){
   if(!token || token.indexOf(".")<0) return false;
-  const [payload, sig] = token.split(".");
-  const expect = await hmac(secret, payload);
-  if(!safeEqual(sig, expect)) return false;
+  const parts = token.split(".");
+  const expect = await hmac(secret, parts[0]);
+  if(!safeEqual(parts[1], expect)) return false;
   try{
-    const data = JSON.parse(b64urlToStr(payload));
+    const data = JSON.parse(b64urlToStr(parts[0]));
     return data.exp && data.exp > Math.floor(Date.now()/1000);
-  }catch{ return false; }
+  }catch(e){ return false; }
 }
 function bearer(request){
   const h = request.headers.get("Authorization") || "";
@@ -105,11 +79,10 @@ function bearer(request){
 }
 async function getCatalog(env){
   const raw = await env.KV.get("catalog");
-  if(raw){ try{ return JSON.parse(raw); }catch{} }
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
   return DEFAULT_CATALOG;
 }
 
-/* ---------------- main ---------------- */
 export default {
   async fetch(request, env){
     const origin = request.headers.get("Origin") || "";
@@ -119,18 +92,16 @@ export default {
     if(request.method === "OPTIONS")
       return new Response(null, { status:204, headers:cors(origin) });
 
-    /* ---- public: live catalog for the storefront ---- */
     if(request.method==="GET" && path==="/products"){
       const cat = await getCatalog(env);
-      const pub = cat
-        .filter(p => p.active !== false)
-        .map(p => ({ id:p.id, brand:p.brand, name:p.name, desc:p.desc, size:p.size,
-                     cond:p.cond, price:p.price, was:p.was||null, img:p.img,
-                     sold: (Number(p.stock)||0) <= 0 }));
+      const pub = cat.filter(p => p.active !== false).map(p => ({
+        id:p.id, brand:p.brand, name:p.name, desc:p.desc, size:p.size,
+        cond:p.cond, price:p.price, was:p.was||null, img:p.img,
+        sold: (Number(p.stock)||0) <= 0
+      }));
       return json({ products: pub }, 200, origin);
     }
 
-    /* ---- public: serve an uploaded image from R2 ---- */
     if(request.method==="GET" && path.startsWith("/img/")){
       const key = decodeURIComponent(path.slice(5));
       const obj = await env.BUCKET.get(key);
@@ -141,10 +112,9 @@ export default {
       return new Response(obj.body, { headers });
     }
 
-    /* ---- public: create a Stripe Checkout session ---- */
     if(request.method==="POST" && path==="/checkout"){
       if(!env.STRIPE_SECRET_KEY) return json({error:"Server not configured"},500,origin);
-      let body; try{ body = await request.json(); }catch{ return json({error:"Bad request"},400,origin); }
+      let body; try{ body = await request.json(); }catch(e){ return json({error:"Bad request"},400,origin); }
       const cat = await getCatalog(env);
       const item = cat.find(p => p.id === (body && body.id));
       if(!item) return json({error:"Unknown product"},400,origin);
@@ -158,14 +128,14 @@ export default {
       form.set("line_items[0][quantity]","1");
       form.set("line_items[0][price_data][currency]","usd");
       form.set("line_items[0][price_data][unit_amount]", String(Math.round(Number(item.price)*100)));
-      form.set("line_items[0][price_data][product_data][name]", `${item.name} — ${item.size}`);
+      form.set("line_items[0][price_data][product_data][name]", item.name + " - " + item.size);
       form.set("client_reference_id", item.id);
       form.set("phone_number_collection[enabled]","true");
-      SHIP_TO.forEach((c,i)=> form.set(`shipping_address_collection[allowed_countries][${i}]`, c));
+      SHIP_TO.forEach((c,i)=> form.set("shipping_address_collection[allowed_countries]["+i+"]", c));
 
       const resp = await fetch("https://api.stripe.com/v1/checkout/sessions",{
         method:"POST",
-        headers:{ Authorization:`Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type":"application/x-www-form-urlencoded" },
+        headers:{ Authorization:"Bearer "+env.STRIPE_SECRET_KEY, "Content-Type":"application/x-www-form-urlencoded" },
         body: form,
       });
       const session = await resp.json();
@@ -173,16 +143,15 @@ export default {
       return json({ url: session.url }, 200, origin);
     }
 
-    /* ---- admin: login (rate-limited) ---- */
     if(request.method==="POST" && path==="/admin/login"){
       if(!env.ADMIN_PASSWORD || !env.AUTH_SECRET) return json({error:"Admin not configured"},500,origin);
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-      const rlKey = `rl:${ip}`;
+      const rlKey = "rl:" + ip;
       const fails = Number(await env.KV.get(rlKey)) || 0;
       if(fails >= MAX_LOGIN_FAILS) return json({error:"Too many attempts. Try again later."},429,origin);
 
-      let body; try{ body = await request.json(); }catch{ return json({error:"Bad request"},400,origin); }
-      if(!safeEqual(String(body && body.password || ""), env.ADMIN_PASSWORD)){
+      let body; try{ body = await request.json(); }catch(e){ return json({error:"Bad request"},400,origin); }
+      if(!safeEqual(String((body && body.password) || ""), env.ADMIN_PASSWORD)){
         await env.KV.put(rlKey, String(fails+1), { expirationTtl: LOGIN_WINDOW_SECS });
         return json({error:"Wrong password"},401,origin);
       }
@@ -190,21 +159,17 @@ export default {
       return json({ token: await makeToken(env.AUTH_SECRET) }, 200, origin);
     }
 
-    /* ---- everything below requires a valid token ---- */
-    const needsAuth = path.startsWith("/admin/");
-    if(needsAuth){
+    if(path.startsWith("/admin/")){
       const ok = await verifyToken(env.AUTH_SECRET, bearer(request));
       if(!ok) return json({error:"Unauthorized"},401,origin);
     }
 
-    /* ---- admin: full catalog ---- */
     if(request.method==="GET" && path==="/admin/products"){
       return json({ products: await getCatalog(env) }, 200, origin);
     }
 
-    /* ---- admin: save the whole catalog ---- */
     if(request.method==="POST" && path==="/admin/save"){
-      let body; try{ body = await request.json(); }catch{ return json({error:"Bad request"},400,origin); }
+      let body; try{ body = await request.json(); }catch(e){ return json({error:"Bad request"},400,origin); }
       if(!Array.isArray(body && body.products)) return json({error:"Bad data"},400,origin);
       const clean = body.products.map(p => ({
         id:    String(p.id||"").trim() || ("p-"+Math.random().toString(36).slice(2,8)),
@@ -223,7 +188,6 @@ export default {
       return json({ ok:true, count: clean.length }, 200, origin);
     }
 
-    /* ---- admin: upload an image to R2 ---- */
     if(request.method==="POST" && path==="/admin/upload"){
       const ct = request.headers.get("Content-Type") || "";
       if(!ct.includes("multipart/form-data")) return json({error:"Expected a file"},400,origin);
@@ -234,9 +198,9 @@ export default {
       const buf = await file.arrayBuffer();
       if(buf.byteLength > 6*1024*1024) return json({error:"Max 6MB"},400,origin);
       const ext = (file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5) || "jpg";
-      const key = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const key = Date.now() + "-" + Math.random().toString(36).slice(2,8) + "." + ext;
       await env.BUCKET.put(key, buf, { httpMetadata:{ contentType:file.type } });
-      return json({ url: `${url.origin}/img/${key}` }, 200, origin);
+      return json({ url: url.origin + "/img/" + key }, 200, origin);
     }
 
     return json({ error:"Not found" }, 404, origin);
