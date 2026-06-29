@@ -53,6 +53,8 @@ function migrate(p){
   sizes = sizes
     .map(s => ({ size:String(s.size||"").trim(), stock:Math.max(0,Math.round(Number(s.stock)||0)) }))
     .filter(s => s.size);
+  let images = Array.isArray(p.images) ? p.images.map(x=>String(x||"").trim()).filter(Boolean) : null;
+  if(!images || !images.length) images = p.img ? [String(p.img).trim()] : [];
   return {
     id: String(p.id||"").trim(),
     brand: String(p.brand||"").trim(),
@@ -61,7 +63,8 @@ function migrate(p){
     cond: String(p.cond||"").trim(),
     price: Math.max(0, Math.round(Number(p.price)||0)),
     was: p.was ? Math.max(0, Math.round(Number(p.was))) : null,
-    img: String(p.img||"").trim(),
+    images,
+    img: images[0] || "",
     active: p.active !== false,
     sizes,
   };
@@ -142,7 +145,8 @@ export default {
     if(request.method==="GET" && path==="/products"){
       const cat = await getCatalog(env);
       const pub = cat.filter(p=>p.active!==false && p.sizes.length).map(p=>({
-        id:p.id, brand:p.brand, name:p.name, desc:p.desc, cond:p.cond, price:p.price, was:p.was||null, img:p.img,
+        id:p.id, brand:p.brand, name:p.name, desc:p.desc, cond:p.cond, price:p.price, was:p.was||null,
+        img:p.img, images:p.images,
         sizes: p.sizes.map(s=>({ size:s.size, sold:(Number(s.stock)||0)<=0 })),
         sold: p.sizes.every(s=>(Number(s.stock)||0)<=0)
       }));

@@ -58,6 +58,10 @@ h2.section{font-size:14px;color:var(--soft);font-weight:600;letter-spacing:.04em
 .thumb .up label:hover{border-color:var(--ink);color:var(--ink)}
 .thumb .up input{display:none}
 .thumb .upmsg{font-size:11px;color:var(--soft);text-align:center;margin-top:5px;min-height:14px}
+.gallery-thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.gallery-thumbs .gt{position:relative;width:42px;height:42px}
+.gallery-thumbs .gt img{width:42px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.gallery-thumbs .gtx{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:var(--ink);color:#fff;font-size:12px;line-height:1;cursor:pointer}
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fields .full{grid-column:1/-1}
 .row-foot{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px;flex-wrap:wrap}
@@ -182,8 +186,9 @@ function normalize(p){
   if(!sizes) sizes = [{ size:p.size||"", stock:p.stock??1 }];   // migrate old single-size
   sizes = sizes.map(s=>({ size:s.size||"", stock:s.stock??0 }));
   if(!sizes.length) sizes = [{ size:"", stock:1 }];
+  let images = Array.isArray(p.images) && p.images.length ? p.images.slice() : (p.img ? [p.img] : []);
   return { id:p.id||"", brand:p.brand||"", name:p.name||"", desc:p.desc||"",
-           cond:p.cond||"", price:p.price??0, was:p.was??"", img:p.img||"",
+           cond:p.cond||"", price:p.price??0, was:p.was??"", images,
            active:p.active!==false, sizes };
 }
 function imgSrc(img){
@@ -203,9 +208,12 @@ function render(){
   listEl.innerHTML = products.map((p,i)=>`
     <div class="card ${p.active?'':'off'}" data-i="${i}">
       <div class="thumb">
-        <div class="img">${p.img?`<img src="${imgSrc(p.img)}" alt="">`:'No image'}</div>
+        <div class="img">${p.images[0]?`<img src="${imgSrc(p.images[0])}" alt="">`:'No image'}</div>
+        <div class="gallery-thumbs">
+          ${p.images.map((u,gi)=>`<span class="gt"><img src="${imgSrc(u)}" alt=""><button type="button" class="gtx" data-rmimg="${gi}" title="Remove">×</button></span>`).join("")}
+        </div>
         <div class="up">
-          <label>Upload photo<input type="file" accept="image/*" data-up="${i}"></label>
+          <label>+ Add photo<input type="file" accept="image/*" multiple data-up="${i}"></label>
           <div class="upmsg" data-upmsg="${i}"></div>
         </div>
       </div>
@@ -260,6 +268,8 @@ listEl.addEventListener("click", e=>{
   const card = e.target.closest(".card"); const i = card ? +card.dataset.i : -1;
   if(e.target.dataset.del!==undefined){
     if(confirm("Delete this pair?")){ products.splice(+e.target.dataset.del,1); render(); }
+  } else if(e.target.dataset.rmimg!==undefined && i>=0){
+    products[i].images.splice(+e.target.dataset.rmimg,1); render();
   } else if(e.target.dataset.addsize!==undefined){
     products[i].sizes.push({ size:"", stock:1 }); render();
   } else if(e.target.dataset.rmsize!==undefined){
@@ -272,15 +282,17 @@ listEl.addEventListener("click", e=>{
 
 async function uploadImage(input){
   const i = +input.dataset.up;
-  const file = input.files[0]; if(!file) return;
+  const files = [...input.files]; if(!files.length) return;
   const msg = listEl.querySelector(`[data-upmsg="${i}"]`);
-  msg.textContent = "Uploading…";
   try{
-    const fd = new FormData(); fd.append("file", file);
-    const r = await fetch(API+"/admin/upload",{ method:"POST", headers:authHeaders(), body:fd });
-    const d = await r.json();
-    if(!r.ok) throw new Error(d.error||"Upload failed");
-    products[i].img = d.url;
+    for(let k=0;k<files.length;k++){
+      msg.textContent = `Uploading ${k+1}/${files.length}…`;
+      const fd = new FormData(); fd.append("file", files[k]);
+      const r = await fetch(API+"/admin/upload",{ method:"POST", headers:authHeaders(), body:fd });
+      const d = await r.json();
+      if(!r.ok) throw new Error(d.error||"Upload failed");
+      products[i].images.push(d.url);
+    }
     render();
   }catch(err){ msg.textContent = err.message; }
 }
@@ -300,7 +312,7 @@ $("#saveBtn").addEventListener("click", async ()=>{
     const payload = { products: products.map(p=>({
       id:p.id, brand:p.brand, name:p.name, desc:p.desc, cond:p.cond,
       price:Number(p.price)||0, was:p.was===""||p.was==null?null:Number(p.was),
-      img:p.img, active:!!p.active,
+      images:(p.images||[]).filter(Boolean), active:!!p.active,
       sizes:(p.sizes||[]).map(s=>({ size:String(s.size||"").trim(), stock:Number(s.stock)||0 })).filter(s=>s.size)
     })) };
     const r = await fetch(API+"/admin/save",{ method:"POST", headers:authHeaders({"Content-Type":"application/json"}), body:JSON.stringify(payload) });

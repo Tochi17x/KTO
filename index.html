@@ -85,61 +85,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdro
 .sec-head a{font-size:14px;font-weight:600;color:var(--ink);border-bottom:1.5px solid var(--ink);padding-bottom:2px;white-space:nowrap}
 section{padding:64px 0}
 
-/* ---------- Product grid ---------- */
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
-.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s,border-color .2s}
-.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#dcdce0}
-.card-img{position:relative;aspect-ratio:1/1;background:var(--bg-alt);overflow:hidden}
-.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
-.card:hover .card-img img{transform:scale(1.04)}
-.badge{position:absolute;top:12px;left:12px;background:#fff;font-size:11px;font-weight:700;letter-spacing:.03em;padding:5px 10px;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.badge.verified{display:flex;align-items:center;gap:6px}
-.badge.verified::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
-.card-body{padding:16px 16px 18px;display:flex;flex-direction:column;flex:1}
-.card-brand{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
-.card-name{font-size:15.5px;font-weight:700;margin:5px 0 12px;letter-spacing:-.01em}
-.card-specs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.chip{font-size:12px;color:var(--ink-soft);background:var(--bg-alt);border:1px solid var(--line);padding:4px 9px;border-radius:6px}
-.sizes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.sz{font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);padding:6px 10px;border-radius:7px;cursor:pointer;transition:all .12s}
-.sz:hover{border-color:var(--ink)}
-.sz.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
-.sz.out{color:#bbb;text-decoration:line-through;cursor:not-allowed;background:var(--bg-alt)}
-.sz.out:hover{border-color:var(--line)}
-.card{cursor:pointer}
-.card-cta{margin-top:auto;width:100%;font-size:13px;font-weight:600;border:1px solid var(--line);padding:10px 14px;border-radius:8px;text-align:center;transition:background .15s,color .15s,border-color .15s}
-.card:hover .card-cta{background:var(--ink);color:#fff;border-color:var(--ink)}
-
-/* ---- product modal ---- */
-.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
-.modal.open{display:flex}
-.modal-bg{position:absolute;inset:0;background:rgba(14,14,16,.55);backdrop-filter:blur(3px)}
-.modal-card{position:relative;background:#fff;border-radius:16px;max-width:880px;width:100%;max-height:90vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;box-shadow:0 30px 80px rgba(0,0,0,.3)}
-.modal-close{position:absolute;top:14px;right:14px;z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.9);font-size:20px;cursor:pointer;line-height:1;box-shadow:0 1px 6px rgba(0,0,0,.15)}
-.modal-img{background:var(--bg-alt)}
-.modal-img img{width:100%;height:100%;object-fit:cover;min-height:320px}
-.modal-body{padding:34px 30px}
-.modal-body .brand{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
-.modal-body h2{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:6px 0 14px}
-.modal-price{font-size:24px;font-weight:800;margin-bottom:6px}
-.modal-price small{font-size:14px;font-weight:500;color:var(--ink-soft);text-decoration:line-through;margin-left:6px}
-.modal-cond{display:inline-block;font-size:12px;color:var(--ink-soft);background:var(--bg-alt);border:1px solid var(--line);padding:4px 9px;border-radius:6px;margin-bottom:16px}
-.modal-desc{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin-bottom:22px}
-.modal-body .sizes-label{font-size:13px;font-weight:700;margin-bottom:8px}
-.modal-buy{width:100%;margin-top:24px;background:var(--ink);color:#fff;border:none;border-radius:10px;padding:15px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
-.modal-buy:hover{background:#26262b}
-.modal-buy:disabled{opacity:.45;cursor:not-allowed}
-.modal-note{font-size:12.5px;color:var(--ink-soft);text-align:center;margin-top:10px}
-@media(max-width:680px){ .modal-card{grid-template-columns:1fr} .modal-img img{min-height:240px} }
-.card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.price{font-size:18px;font-weight:800;letter-spacing:-.02em}
-.price small{font-size:12px;font-weight:500;color:var(--ink-soft)}
-.view{font-size:13px;font-weight:600;border:1px solid var(--line);padding:9px 14px;border-radius:8px;transition:background .15s,color .15s,border-color .15s;white-space:nowrap;cursor:pointer}
-.buy-btn{background:var(--ink);color:#fff;border-color:var(--ink)}
-.buy-btn:hover{background:#26262b}
-.sold-btn{color:var(--ink-soft);background:var(--bg-alt);cursor:not-allowed}
-.card.is-sold .card-img img{opacity:.55;filter:grayscale(.3)}
-.badge.sold-badge{background:var(--ink);color:#fff}
+/* product grid, cards, sizes & modal now live in store.css */
 .checkout-note{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);margin-top:18px}
 .checkout-note svg{width:15px;height:15px;flex:none}
 
@@ -211,6 +157,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
   .grid{grid-template-columns:1fr}
 }
 </style>
+<link rel="stylesheet" href="store.css">
 </head>
 
 <body>
@@ -225,8 +172,8 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
 
     <ul class="nav-links">
       <li><a href="#">Home</a></li>
-      <li><a href="#shop">Shop</a></li>
-      <li><a href="#shop">New Arrivals</a></li>
+      <li><a href="catalog.html">Shop</a></li>
+      <li><a href="catalog.html">New Arrivals</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -244,8 +191,8 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
   <!-- mobile drawer -->
   <nav class="mobile-nav" id="mobileNav">
     <a href="#">Home</a>
-    <a href="#shop">Shop</a>
-    <a href="#shop">New Arrivals</a>
+    <a href="catalog.html">Shop</a>
+    <a href="catalog.html">New Arrivals</a>
     <a href="#about">About</a>
     <a href="#contact">Contact</a>
   </nav>
@@ -290,11 +237,10 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
         <h2>Featured pairs</h2>
         <p>Hand-checked deadstock & gently worn — sizes are limited.</p>
       </div>
-      <a href="#shop">View all</a>
+      <a href="catalog.html">View full catalog →</a>
     </div>
 
-    <!-- Cards are generated from the PRODUCTS array in the script below.
-         To edit names, sizes, prices or images, just change that array. -->
+    <!-- Products load live from the Worker (managed in admin.html). -->
     <div class="grid" id="grid"></div>
 
     <div class="checkout-note">
@@ -370,10 +316,9 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
       <div>
         <h4>Shop</h4>
         <ul>
-          <li><a href="#shop">All sneakers</a></li>
-          <li><a href="#shop">New arrivals</a></li>
-          <li><a href="#shop">Jordan</a></li>
-          <li><a href="#shop">Nike</a></li>
+          <li><a href="catalog.html">All sneakers</a></li>
+          <li><a href="catalog.html">New arrivals</a></li>
+          <li><a href="catalog.html">Catalog</a></li>
         </ul>
       </div>
       <div>
@@ -381,7 +326,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
         <ul>
           <li><a href="#contact">Sizing &amp; fit</a></li>
           <li><a href="#contact">Shipping</a></li>
-          <li><a href="#contact">Returns</a></li>
+          <li><a href="terms.html">Terms &amp; refund policy</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </div>
@@ -400,175 +345,25 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
   </div>
 </footer>
 
-<!-- ============ PRODUCT MODAL ============ -->
-<div class="modal" id="modal" aria-hidden="true">
-  <div class="modal-bg" data-close></div>
-  <div class="modal-card">
-    <button class="modal-close" data-close aria-label="Close">×</button>
-    <div class="modal-img"><img id="mImg" src="" alt=""></div>
-    <div class="modal-body">
-      <span class="brand" id="mBrand"></span>
-      <h2 id="mName"></h2>
-      <div class="modal-price" id="mPrice"></div>
-      <span class="modal-cond" id="mCond"></span>
-      <p class="modal-desc" id="mDesc"></p>
-      <div class="sizes-label">Select size</div>
-      <div class="sizes" id="mSizes"></div>
-      <button class="modal-buy" id="mBuy">Select a size</button>
-      <div class="modal-note">Secure checkout by Stripe · Verified authentic · Ships in 1–2 days</div>
-    </div>
-  </div>
-</div>
+<!-- Products + the detail modal are handled by store.js -->
+<script>
+  window.KTO_CONFIG = {
+    endpoint: "https://kto-checkout.tochiorji4.workers.dev",
+    ig: "https://instagram.com/ktoresells",
+    grid: "#grid",
+    limit: 8,                 // homepage shows up to 8 featured; full list on catalog.html
+    termsUrl: "terms.html"
+  };
+</script>
+<script src="store.js"></script>
 
 <script>
-/* ============================================================
-   The shop now loads its pairs LIVE from the Worker (/products),
-   which reads them from your admin dashboard. Edit inventory at
-   /admin.html — no code changes needed.
-
-   FALLBACK_PRODUCTS below is only shown if that fetch ever fails,
-   so the page is never empty.
-   ============================================================ */
-const CHECKOUT_ENDPOINT = "https://kto-checkout.tochiorji4.workers.dev";
-const IG_DM = "https://instagram.com/ktoresells";
-
-const FALLBACK_PRODUCTS = [
-  { id:"af1-air-10",       img:"photos/IMG_6990.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "AIR"',      cond:"Deadstock",    price:420, was:null, sizes:[{size:"US 10",sold:false}], sold:false },
-  { id:"aj11-gamma-9",     img:"photos/IMG_6994.jpeg", brand:"Air Jordan",     name:'Jordan 11 Retro "Gamma Blue"',    cond:"Deadstock",    price:300, was:null, sizes:[{size:"US 9",sold:false},{size:"US 10",sold:false}], sold:false },
-  { id:"aj5-unc-8",        img:"photos/IMG_7002.jpeg", brand:"Air Jordan",     name:'Jordan 5 Retro "University Blue"', cond:"Deadstock",    price:265, was:null, sizes:[{size:"US 8",sold:false}], sold:false },
-  { id:"bv-orbit-burg-95", img:"photos/IMG_7005.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Burgundy",        cond:"Deadstock",    price:690, was:1150, sizes:[{size:"US 9.5",sold:false}], sold:false },
-  { id:"af1-flea-11",      img:"photos/IMG_7011.jpeg", brand:"Nike",           name:'Air Force 1 Low CPFM "FLEA"',     cond:"Worn — Clean", price:380, was:null, sizes:[{size:"US 11",sold:false}], sold:false },
-  { id:"bv-orbit-black-10",img:"photos/IMG_7009.jpeg", brand:"Bottega Veneta", name:"Orbit Sneaker — Black Suede",     cond:"Deadstock",    price:640, was:1050, sizes:[{size:"US 10",sold:false}], sold:false },
-];
-
-const grid = document.getElementById('grid');
-let PRODUCTS = [];
-
-/* ---- load live inventory, fall back if needed ---- */
-(async function loadProducts(){
-  grid.innerHTML = `<p style="color:var(--ink-soft);grid-column:1/-1;padding:20px 0">Loading sneakers…</p>`;
-  try{
-    const res = await fetch(`${CHECKOUT_ENDPOINT}/products`, { cache:"no-store" });
-    const data = await res.json();
-    PRODUCTS = (data.products && data.products.length) ? data.products : FALLBACK_PRODUCTS;
-  }catch{
-    PRODUCTS = FALLBACK_PRODUCTS;
-  }
-  renderProducts();
-})();
-
-function renderProducts(){
-  grid.innerHTML = PRODUCTS.map((p, i) => {
-    const n = (p.sizes||[]).filter(s=>!s.sold).length;
-    const sizeInfo = p.sold ? 'Sold out' : (n>1 ? n+' sizes available' : (p.sizes&&p.sizes[0]?'Size '+p.sizes[0].size:''));
-    return `
-    <article class="card${p.sold?' is-sold':''}" data-i="${i}">
-      <div class="card-img">
-        ${p.sold ? `<span class="badge sold-badge">Sold</span>`
-                 : `<span class="badge verified">Verified</span>`}
-        <img src="${p.img}" alt="${p.name}" loading="lazy" />
-      </div>
-      <div class="card-body">
-        <span class="card-brand">${p.brand}</span>
-        <h3 class="card-name">${p.name}</h3>
-        <div class="card-specs">
-          <span class="chip">${p.cond}</span>
-          <span class="chip">${sizeInfo}</span>
-        </div>
-        <div class="card-foot" style="margin-bottom:12px">
-          <span class="price">$${p.price}${p.was?` <small style="text-decoration:line-through">$${p.was}</small>`:``}</span>
-        </div>
-        <div class="card-cta">${p.sold ? 'View' : 'View &amp; buy'}</div>
-      </div>
-    </article>`;
-  }).join('');
-}
-
-/* clicking a card opens its product detail modal */
-grid.addEventListener("click", e => {
-  const card = e.target.closest(".card");
-  if(card) openModal(+card.dataset.i);
-});
-
-/* ================= PRODUCT MODAL ================= */
-const modal = document.getElementById('modal');
-let mIndex = -1, mSize = null;
-
-function openModal(i){
-  const p = PRODUCTS[i]; if(!p) return;
-  mIndex = i; mSize = null;
-  document.getElementById('mImg').src = p.img;
-  document.getElementById('mImg').alt = p.name;
-  document.getElementById('mBrand').textContent = p.brand;
-  document.getElementById('mName').textContent = p.name;
-  document.getElementById('mPrice').innerHTML = `$${p.price}${p.was?` <small>$${p.was}</small>`:``}`;
-  document.getElementById('mCond').textContent = p.cond;
-  document.getElementById('mDesc').textContent = p.desc || '';
-  const sizes = p.sizes || [];
-  const avail = sizes.filter(s=>!s.sold);
-  document.getElementById('mSizes').innerHTML = sizes.map(s =>
-    `<button type="button" class="sz${s.sold?' out':''}" data-size="${s.size}" ${s.sold?'disabled':''}>${s.size}</button>`
-  ).join('') || '<span style="color:var(--ink-soft);font-size:13px">No sizes listed</span>';
-  if(avail.length===1){ mSize = avail[0].size; }
-  updateBuyBtn();
-  // pre-highlight auto-selected single size
-  if(mSize){ const b=[...document.querySelectorAll('#mSizes .sz')].find(x=>x.dataset.size===mSize); if(b) b.classList.add('sel'); }
-  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
-}
-function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
-function updateBuyBtn(){
-  const btn = document.getElementById('mBuy');
-  const p = PRODUCTS[mIndex];
-  if(p && p.sold){ btn.textContent='Sold out'; btn.disabled=true; return; }
-  if(!mSize){ btn.textContent='Select a size'; btn.disabled=true; return; }
-  btn.textContent = `Buy Now — ${mSize}`; btn.disabled=false;
-}
-document.getElementById('mSizes').addEventListener('click', e => {
-  const sz = e.target.closest('.sz'); if(!sz || sz.classList.contains('out')) return;
-  mSize = sz.dataset.size;
-  document.querySelectorAll('#mSizes .sz').forEach(b=>b.classList.remove('sel'));
-  sz.classList.add('sel');
-  updateBuyBtn();
-});
-modal.addEventListener('click', e => { if(e.target.hasAttribute('data-close')) closeModal(); });
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
-
-/* ---- Buy Now (from modal) → Stripe Checkout ---- */
-document.getElementById('mBuy').addEventListener('click', async () => {
-  const p = PRODUCTS[mIndex];
-  if(!p || !mSize) return;
-  if(!CHECKOUT_ENDPOINT){ window.open(IG_DM, "_blank", "noopener"); return; }
-  const btn = document.getElementById('mBuy');
-  const label = btn.textContent;
-  btn.disabled = true; btn.textContent = "…";
-  try{
-    const res = await fetch(`${CHECKOUT_ENDPOINT}/checkout`, {
-      method:"POST", headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ id: p.id, size: mSize })
-    });
-    const data = await res.json();
-    if(data.url){ window.location = data.url; return; }
-    throw new Error(data.error || "Checkout unavailable");
-  }catch(err){
-    alert("Sorry — checkout couldn't start. DM @ktoresells and we'll sort it.\n\n("+err.message+")");
-    btn.disabled = false; btn.textContent = label;
-  }
-});
-
-/* ---- bag → jump to shop (real store: checkout happens per-pair) ---- */
-document.querySelector('.bag').addEventListener('click', e => {
-  e.preventDefault();
-  document.getElementById('shop').scrollIntoView({behavior:'smooth'});
-});
-
-/* ---- mobile menu ---- */
+/* page chrome only */
+document.querySelector('.bag').addEventListener('click', e => { e.preventDefault(); document.getElementById('shop').scrollIntoView({behavior:'smooth'}); });
 const menuBtn = document.getElementById('menuBtn');
 const mobileNav = document.getElementById('mobileNav');
 menuBtn.addEventListener('click', () => mobileNav.classList.toggle('open'));
 mobileNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileNav.classList.remove('open')));
-
-/* ---- year ---- */
 document.getElementById('year').textContent = new Date().getFullYear();
 </script>
 

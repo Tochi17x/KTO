@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shop All — KTO Resells</title>
+<meta name="description" content="Browse every authenticated pair at KTO Resells. Search by name, brand or size." />
+<link rel="stylesheet" href="store.css">
+<style>
+  .announce{background:var(--ink);color:#fff;font-size:12.5px;letter-spacing:.04em;text-align:center;padding:9px 16px}
+  header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .brand{font-weight:800;font-size:19px;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .nav-links{display:flex;gap:26px;list-style:none}
+  .nav-links a{font-size:14.5px;color:var(--ink-soft);font-weight:500}
+  .nav-links a:hover{color:var(--ink)}
+  .catalog-head{padding:40px 0 8px}
+  .catalog-head h1{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.02em}
+  .catalog-head p{color:var(--ink-soft);margin:8px 0 22px;font-size:15px}
+  section{padding:0 0 64px}
+  footer{border-top:1px solid var(--line);padding:36px 0;margin-top:20px;text-align:center}
+  footer p{font-size:13px;color:var(--ink-soft)}
+  footer a{color:var(--ink);font-weight:600}
+  @media(max-width:680px){ .nav-links{display:none} }
+</style>
+</head>
+<body>
+
+<div class="announce"><span>Free tracked shipping · Every pair verified · All sales final — exchanges only</span></div>
+
+<header>
+  <div class="wrap nav">
+    <a href="index.html" class="brand"><span class="dot"></span>KTO Resells</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="catalog.html">Shop</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#contact">Contact</a></li>
+      <li><a href="terms.html">Terms</a></li>
+    </ul>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="catalog-head">
+    <h1>Shop all sneakers</h1>
+    <p>Every authenticated pair, in stock right now. Search by name, brand or size.</p>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="search" placeholder="Search e.g. Jordan, US 9, Nike…" autocomplete="off">
+    </div>
+  </div>
+
+  <section>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>© <span id="year"></span> KTO Resells · <a href="terms.html">Terms &amp; refund policy</a> · <a href="index.html#contact">Contact</a></p>
+  </div>
+</footer>
+
+<script>
+  window.KTO_CONFIG = {
+    endpoint: "https://kto-checkout.tochiorji4.workers.dev",
+    ig: "https://instagram.com/ktoresells",
+    grid: "#grid",
+    search: "#search",
+    limit: 0,
+    termsUrl: "terms.html"
+  };
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+<script src="store.js"></script>
+</body>
+</html>
