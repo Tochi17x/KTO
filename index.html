@@ -106,6 +106,31 @@ section{padding:64px 0}
 .sz.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
 .sz.out{color:#bbb;text-decoration:line-through;cursor:not-allowed;background:var(--bg-alt)}
 .sz.out:hover{border-color:var(--line)}
+.card{cursor:pointer}
+.card-cta{margin-top:auto;width:100%;font-size:13px;font-weight:600;border:1px solid var(--line);padding:10px 14px;border-radius:8px;text-align:center;transition:background .15s,color .15s,border-color .15s}
+.card:hover .card-cta{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ---- product modal ---- */
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}
+.modal-bg{position:absolute;inset:0;background:rgba(14,14,16,.55);backdrop-filter:blur(3px)}
+.modal-card{position:relative;background:#fff;border-radius:16px;max-width:880px;width:100%;max-height:90vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.modal-close{position:absolute;top:14px;right:14px;z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.9);font-size:20px;cursor:pointer;line-height:1;box-shadow:0 1px 6px rgba(0,0,0,.15)}
+.modal-img{background:var(--bg-alt)}
+.modal-img img{width:100%;height:100%;object-fit:cover;min-height:320px}
+.modal-body{padding:34px 30px}
+.modal-body .brand{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.modal-body h2{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:6px 0 14px}
+.modal-price{font-size:24px;font-weight:800;margin-bottom:6px}
+.modal-price small{font-size:14px;font-weight:500;color:var(--ink-soft);text-decoration:line-through;margin-left:6px}
+.modal-cond{display:inline-block;font-size:12px;color:var(--ink-soft);background:var(--bg-alt);border:1px solid var(--line);padding:4px 9px;border-radius:6px;margin-bottom:16px}
+.modal-desc{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin-bottom:22px}
+.modal-body .sizes-label{font-size:13px;font-weight:700;margin-bottom:8px}
+.modal-buy{width:100%;margin-top:24px;background:var(--ink);color:#fff;border:none;border-radius:10px;padding:15px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+.modal-buy:hover{background:#26262b}
+.modal-buy:disabled{opacity:.45;cursor:not-allowed}
+.modal-note{font-size:12.5px;color:var(--ink-soft);text-align:center;margin-top:10px}
+@media(max-width:680px){ .modal-card{grid-template-columns:1fr} .modal-img img{min-height:240px} }
 .card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .price{font-size:18px;font-weight:800;letter-spacing:-.02em}
 .price small{font-size:12px;font-weight:500;color:var(--ink-soft)}
@@ -375,6 +400,26 @@ footer{border-top:1px solid var(--line);padding:56px 0 36px;margin-top:8px}
   </div>
 </footer>
 
+<!-- ============ PRODUCT MODAL ============ -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card">
+    <button class="modal-close" data-close aria-label="Close">×</button>
+    <div class="modal-img"><img id="mImg" src="" alt=""></div>
+    <div class="modal-body">
+      <span class="brand" id="mBrand"></span>
+      <h2 id="mName"></h2>
+      <div class="modal-price" id="mPrice"></div>
+      <span class="modal-cond" id="mCond"></span>
+      <p class="modal-desc" id="mDesc"></p>
+      <div class="sizes-label">Select size</div>
+      <div class="sizes" id="mSizes"></div>
+      <button class="modal-buy" id="mBuy">Select a size</button>
+      <div class="modal-note">Secure checkout by Stripe · Verified authentic · Ships in 1–2 days</div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    The shop now loads its pairs LIVE from the Worker (/products),
@@ -398,7 +443,6 @@ const FALLBACK_PRODUCTS = [
 
 const grid = document.getElementById('grid');
 let PRODUCTS = [];
-const picked = {};   // index -> chosen size
 
 /* ---- load live inventory, fall back if needed ---- */
 (async function loadProducts(){
@@ -415,18 +459,10 @@ const picked = {};   // index -> chosen size
 
 function renderProducts(){
   grid.innerHTML = PRODUCTS.map((p, i) => {
-    const sizes = p.sizes || [];
-    const avail = sizes.filter(s=>!s.sold);
-    // auto-pick if only one available size
-    if(avail.length===1) picked[i] = avail[0].size;
-    const sizeBtns = sizes.map(s =>
-      `<button type="button" class="sz${s.sold?' out':''}${picked[i]===s.size?' sel':''}" data-i="${i}" data-size="${s.size}" ${s.sold?'disabled':''}>${s.size}</button>`
-    ).join('');
-    const cta = p.sold
-      ? `<span class="view sold-btn">Sold out</span>`
-      : `<button type="button" class="view buy-btn" data-i="${i}">Buy Now</button>`;
+    const n = (p.sizes||[]).filter(s=>!s.sold).length;
+    const sizeInfo = p.sold ? 'Sold out' : (n>1 ? n+' sizes available' : (p.sizes&&p.sizes[0]?'Size '+p.sizes[0].size:''));
     return `
-    <article class="card${p.sold?' is-sold':''}">
+    <article class="card${p.sold?' is-sold':''}" data-i="${i}">
       <div class="card-img">
         ${p.sold ? `<span class="badge sold-badge">Sold</span>`
                  : `<span class="badge verified">Verified</span>`}
@@ -437,54 +473,88 @@ function renderProducts(){
         <h3 class="card-name">${p.name}</h3>
         <div class="card-specs">
           <span class="chip">${p.cond}</span>
+          <span class="chip">${sizeInfo}</span>
         </div>
-        ${sizes.length ? `<div class="sizes">${sizeBtns}</div>` : ``}
-        <div class="card-foot">
+        <div class="card-foot" style="margin-bottom:12px">
           <span class="price">$${p.price}${p.was?` <small style="text-decoration:line-through">$${p.was}</small>`:``}</span>
-          ${cta}
         </div>
+        <div class="card-cta">${p.sold ? 'View' : 'View &amp; buy'}</div>
       </div>
     </article>`;
   }).join('');
 }
 
-/* ---- size selection ---- */
+/* clicking a card opens its product detail modal */
 grid.addEventListener("click", e => {
-  const sz = e.target.closest(".sz");
-  if(sz && !sz.classList.contains("out")){
-    const i = sz.dataset.i;
-    picked[i] = sz.dataset.size;
-    sz.closest(".sizes").querySelectorAll(".sz").forEach(b=>b.classList.remove("sel"));
-    sz.classList.add("sel");
-    return;
-  }
-  const btn = e.target.closest(".buy-btn");
-  if(btn) checkout(btn);
+  const card = e.target.closest(".card");
+  if(card) openModal(+card.dataset.i);
 });
 
-/* ---- Buy Now → ask the Worker for a Stripe Checkout URL, then go ---- */
-async function checkout(btn){
-  const i = btn.dataset.i;
-  const p = PRODUCTS[i];
-  const size = picked[i];
-  if(!size){ alert("Please pick a size first."); return; }
+/* ================= PRODUCT MODAL ================= */
+const modal = document.getElementById('modal');
+let mIndex = -1, mSize = null;
+
+function openModal(i){
+  const p = PRODUCTS[i]; if(!p) return;
+  mIndex = i; mSize = null;
+  document.getElementById('mImg').src = p.img;
+  document.getElementById('mImg').alt = p.name;
+  document.getElementById('mBrand').textContent = p.brand;
+  document.getElementById('mName').textContent = p.name;
+  document.getElementById('mPrice').innerHTML = `$${p.price}${p.was?` <small>$${p.was}</small>`:``}`;
+  document.getElementById('mCond').textContent = p.cond;
+  document.getElementById('mDesc').textContent = p.desc || '';
+  const sizes = p.sizes || [];
+  const avail = sizes.filter(s=>!s.sold);
+  document.getElementById('mSizes').innerHTML = sizes.map(s =>
+    `<button type="button" class="sz${s.sold?' out':''}" data-size="${s.size}" ${s.sold?'disabled':''}>${s.size}</button>`
+  ).join('') || '<span style="color:var(--ink-soft);font-size:13px">No sizes listed</span>';
+  if(avail.length===1){ mSize = avail[0].size; }
+  updateBuyBtn();
+  // pre-highlight auto-selected single size
+  if(mSize){ const b=[...document.querySelectorAll('#mSizes .sz')].find(x=>x.dataset.size===mSize); if(b) b.classList.add('sel'); }
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+function updateBuyBtn(){
+  const btn = document.getElementById('mBuy');
+  const p = PRODUCTS[mIndex];
+  if(p && p.sold){ btn.textContent='Sold out'; btn.disabled=true; return; }
+  if(!mSize){ btn.textContent='Select a size'; btn.disabled=true; return; }
+  btn.textContent = `Buy Now — ${mSize}`; btn.disabled=false;
+}
+document.getElementById('mSizes').addEventListener('click', e => {
+  const sz = e.target.closest('.sz'); if(!sz || sz.classList.contains('out')) return;
+  mSize = sz.dataset.size;
+  document.querySelectorAll('#mSizes .sz').forEach(b=>b.classList.remove('sel'));
+  sz.classList.add('sel');
+  updateBuyBtn();
+});
+modal.addEventListener('click', e => { if(e.target.hasAttribute('data-close')) closeModal(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+/* ---- Buy Now (from modal) → Stripe Checkout ---- */
+document.getElementById('mBuy').addEventListener('click', async () => {
+  const p = PRODUCTS[mIndex];
+  if(!p || !mSize) return;
   if(!CHECKOUT_ENDPOINT){ window.open(IG_DM, "_blank", "noopener"); return; }
+  const btn = document.getElementById('mBuy');
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = "…";
   try{
     const res = await fetch(`${CHECKOUT_ENDPOINT}/checkout`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ id: p.id, size })
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ id: p.id, size: mSize })
     });
     const data = await res.json();
-    if(data.url){ window.location = data.url; return; }     // → Stripe hosted checkout
+    if(data.url){ window.location = data.url; return; }
     throw new Error(data.error || "Checkout unavailable");
   }catch(err){
     alert("Sorry — checkout couldn't start. DM @ktoresells and we'll sort it.\n\n("+err.message+")");
     btn.disabled = false; btn.textContent = label;
   }
-}
+});
 
 /* ---- bag → jump to shop (real store: checkout happens per-pair) ---- */
 document.querySelector('.bag').addEventListener('click', e => {
