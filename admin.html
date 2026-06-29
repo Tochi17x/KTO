@@ -67,6 +67,13 @@ h2.section{font-size:14px;color:var(--soft);font-weight:600;letter-spacing:.04em
 .pill.live{background:#e9f7ee;color:var(--ok);border-color:#bfe6cc}
 .pill.sold{background:#fdebed;color:var(--bad);border-color:#f0c4c8}
 .pill.hidden-pill{background:#f1f1f1;color:var(--soft)}
+.sizes-box{grid-column:1/-1;border:1px solid var(--line);border-radius:8px;padding:12px;background:#fafafa}
+.sizes-box .hd{font-size:12.5px;font-weight:600;color:var(--soft);margin-bottom:8px}
+.size-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.size-row input.sz{flex:1;border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.size-row input.st{width:110px;border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.size-row .rm{border:1px solid #f0c4c8;color:var(--bad);background:#fff;border-radius:7px;padding:7px 11px;font-weight:700}
+.addsize{font-size:13px;font-weight:600;color:var(--accent);background:none;border:none;padding:4px 0}
 @media(max-width:620px){
   .card{grid-template-columns:1fr}
   .thumb,.thumb .img{width:100%}
@@ -171,18 +178,23 @@ async function loadProducts(){
   render();
 }
 function normalize(p){
-  return { id:p.id||"", brand:p.brand||"", name:p.name||"", desc:p.desc||"", size:p.size||"",
+  let sizes = Array.isArray(p.sizes) ? p.sizes.slice() : null;
+  if(!sizes) sizes = [{ size:p.size||"", stock:p.stock??1 }];   // migrate old single-size
+  sizes = sizes.map(s=>({ size:s.size||"", stock:s.stock??0 }));
+  if(!sizes.length) sizes = [{ size:"", stock:1 }];
+  return { id:p.id||"", brand:p.brand||"", name:p.name||"", desc:p.desc||"",
            cond:p.cond||"", price:p.price??0, was:p.was??"", img:p.img||"",
-           stock:p.stock??0, active:p.active!==false };
+           active:p.active!==false, sizes };
 }
 function imgSrc(img){
   if(!img) return "";
   if(/^https?:\/\//.test(img)) return img;
   return "https://ktoresell.shop/"+img.replace(/^\//,"");
 }
+function totalStock(p){ return (p.sizes||[]).reduce((n,s)=>n+(Number(s.stock)||0),0); }
 function statusPill(p){
   if(!p.active) return '<span class="pill hidden-pill">Hidden</span>';
-  if((Number(p.stock)||0)<=0) return '<span class="pill sold">Sold out</span>';
+  if(totalStock(p)<=0) return '<span class="pill sold">Sold out</span>';
   return '<span class="pill live">Live</span>';
 }
 
@@ -201,12 +213,20 @@ function render(){
         <label class="field"><span>Brand</span><input data-f="brand" value="${esc(p.brand)}"></label>
         <label class="field"><span>Name</span><input data-f="name" value="${esc(p.name)}"></label>
         <label class="field full"><span>Description</span><textarea data-f="desc">${esc(p.desc)}</textarea></label>
-        <label class="field"><span>Size</span><input data-f="size" value="${esc(p.size)}"></label>
         <label class="field"><span>Condition</span><input data-f="cond" value="${esc(p.cond)}"></label>
         <label class="field"><span>Price (USD)</span><input data-f="price" type="number" min="0" value="${esc(p.price)}"></label>
         <label class="field"><span>Was / retail (optional)</span><input data-f="was" type="number" min="0" value="${esc(p.was)}"></label>
-        <label class="field"><span>Stock (0 = sold out)</span><input data-f="stock" type="number" min="0" value="${esc(p.stock)}"></label>
         <label class="field"><span>Product ID (don't change once live)</span><input data-f="id" value="${esc(p.id)}"></label>
+        <div class="sizes-box">
+          <div class="hd">Sizes &amp; stock (stock 0 = that size shows sold out)</div>
+          ${p.sizes.map((s,si)=>`
+            <div class="size-row" data-si="${si}">
+              <input class="sz" data-sf="size" placeholder="e.g. US 9" value="${esc(s.size)}">
+              <input class="st" data-sf="stock" type="number" min="0" placeholder="stock" value="${esc(s.stock)}">
+              <button type="button" class="rm" data-rmsize="${si}">Remove</button>
+            </div>`).join("")}
+          <button type="button" class="addsize" data-addsize="${i}">+ Add size</button>
+        </div>
         <div class="row-foot">
           <label class="toggle"><input type="checkbox" data-f="active" ${p.active?'checked':''}> Show on store</label>
           <div style="display:flex;gap:10px;align-items:center">
@@ -221,8 +241,15 @@ function esc(v){ return String(v??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;
 
 /* ============ edits (event delegation) ============ */
 listEl.addEventListener("input", e=>{
+  const card = e.target.closest(".card"); if(!card) return;
+  const i = +card.dataset.i;
+  const sf = e.target.dataset.sf;            // size-row field
+  if(sf){
+    const si = +e.target.closest(".size-row").dataset.si;
+    products[i].sizes[si][sf] = e.target.value;
+    return;
+  }
   const f = e.target.dataset.f; if(!f) return;
-  const i = +e.target.closest(".card").dataset.i;
   products[i][f] = e.target.type==="checkbox" ? e.target.checked : e.target.value;
 });
 listEl.addEventListener("change", e=>{
@@ -230,9 +257,16 @@ listEl.addEventListener("change", e=>{
   if(e.target.dataset.up!==undefined) uploadImage(e.target);
 });
 listEl.addEventListener("click", e=>{
-  const del = e.target.dataset.del;
-  if(del!==undefined){
-    if(confirm("Delete this pair?")){ products.splice(+del,1); render(); }
+  const card = e.target.closest(".card"); const i = card ? +card.dataset.i : -1;
+  if(e.target.dataset.del!==undefined){
+    if(confirm("Delete this pair?")){ products.splice(+e.target.dataset.del,1); render(); }
+  } else if(e.target.dataset.addsize!==undefined){
+    products[i].sizes.push({ size:"", stock:1 }); render();
+  } else if(e.target.dataset.rmsize!==undefined){
+    const si=+e.target.dataset.rmsize;
+    products[i].sizes.splice(si,1);
+    if(!products[i].sizes.length) products[i].sizes.push({size:"",stock:0});
+    render();
   }
 });
 
@@ -253,7 +287,7 @@ async function uploadImage(input){
 
 /* ============ add / save ============ */
 $("#addBtn").addEventListener("click", ()=>{
-  products.unshift(normalize({ id:"pair-"+Math.random().toString(36).slice(2,7), brand:"", name:"New pair", desc:"", size:"", cond:"Deadstock", price:0, was:"", img:"", stock:1, active:false }));
+  products.unshift(normalize({ id:"pair-"+Math.random().toString(36).slice(2,7), brand:"", name:"New pair", desc:"", cond:"Deadstock", price:0, was:"", img:"", active:false, sizes:[{size:"",stock:1}] }));
   render();
   window.scrollTo({top:0,behavior:"smooth"});
 });
@@ -264,9 +298,10 @@ $("#saveBtn").addEventListener("click", async ()=>{
   btn.disabled=true; btn.textContent="Saving…";
   try{
     const payload = { products: products.map(p=>({
-      id:p.id, brand:p.brand, name:p.name, desc:p.desc, size:p.size, cond:p.cond,
+      id:p.id, brand:p.brand, name:p.name, desc:p.desc, cond:p.cond,
       price:Number(p.price)||0, was:p.was===""||p.was==null?null:Number(p.was),
-      img:p.img, stock:Number(p.stock)||0, active:!!p.active
+      img:p.img, active:!!p.active,
+      sizes:(p.sizes||[]).map(s=>({ size:String(s.size||"").trim(), stock:Number(s.stock)||0 })).filter(s=>s.size)
     })) };
     const r = await fetch(API+"/admin/save",{ method:"POST", headers:authHeaders({"Content-Type":"application/json"}), body:JSON.stringify(payload) });
     const d = await r.json();
